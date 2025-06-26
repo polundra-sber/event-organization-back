@@ -9,6 +9,7 @@ paths:
 
 components:
   schemas:
+
     # Мероприятие
     Event:
       type: object
@@ -53,6 +54,7 @@ components:
           maxLength: 32
           example: "https://t.me/chat_id"
           default: "Ссылка не прикреплена"
+
    # Пользователь
     User:
       type: object
@@ -96,6 +98,7 @@ components:
         - email
         - name
         - surname
+
     # Задача
     Task:
       type: object
@@ -112,6 +115,7 @@ components:
           type: string
           maxLength: 254
           example: Торт без орехов и без апельсина
+          default: "Описание не добавлено"
         status_id:
           type: integer
           example: 2
@@ -121,6 +125,7 @@ components:
         responsible_user:
           type: integer
           example: 1234
+          default: "Не назначен"
         deadline_date:
           type: string
           format: date
