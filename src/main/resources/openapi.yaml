@@ -1,9 +1,109 @@
 openapi: 3.1.0
 info:
-  title: Title
-  description: Title
+  title: "Сервис помощи организации частных мероприятий"
+  description: Тип - веб-приложение. Задачи - позволяет пользователям совместно планировать события, делить задачи, распределять расходы и отслеживать обязательства.
   version: 1.0.0
 servers:
   - url: 'https'
 paths:
-  
+
+components:
+  schemas:
+    # Мероприятие
+    Event:
+      type: object
+      required:
+        - event_id
+        - event_name
+        - date
+        - status
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        event_description:
+          type: string
+          maxLength: 254
+          example: Берите пледы и хорошее настроение!
+          default: "Описание не добавлено"
+        status_id:
+          type: integer
+        location:
+          type: string
+          maxLength: 100
+          example: Центральный парк
+          default: "Место не указано"
+        event_date:
+          type: string
+          format: date
+          example: "2025-06-12"
+          description: Дата в формате YYYY-MM-DD
+        event_time:
+          type: string
+          format: time
+          example: "16:00"
+          x-format: HH:MM  #кастомное расширение
+          default: "Время не указано"
+        chat_link:
+          type: string
+          maxLength: 32
+          example: "https://t.me/chat_id"
+          default: "Ссылка не прикреплена"
+
+
+
+    # Вещь
+    Stuff:
+      type: object
+      required:
+        - stuff_id
+        - event_id
+        - stuff_name
+        - responsible_user
+      properties:
+        stuff_id:
+          type: integer
+        stuff_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Веревка
+        stuff_description:
+          type: string
+          maxLength: 254
+          example: 5 метров, канатная
+          default: "Описание не добавлено"
+        event_id:
+          type: integer
+        responsible_user:
+          type: integer
+    # Долг
+    Debt:
+      type: object
+      required:
+        - debt_id
+        - event_id
+        - payer_id
+        - recipient_id
+        - status_id
+        - debt_amount
+      properties:
+        debt_id:
+          type: integer
+        payer_id:
+          type: integer
+        recipient_id:
+          type: integer
+        status_id:
+          type: integer
+        debt_amount:
+          type: number
+          format: float
+          minimum: 0
+          example: 123.50
+        event_id:
+          type: integer
