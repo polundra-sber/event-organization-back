@@ -156,6 +156,157 @@ paths:
                     type: string
                     default: "Вы уже присоединены к данному мероприятию"
 
+  /profile:
+    get:
+      summary: Вход в личный профиль
+      responses:
+        '200':
+          description: Данные профиля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      summary: Редактирование профиля
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEditor'
+      responses:
+        '201':
+          description: Данные профиля изменены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEditor'
+        '409':
+          description: Пользователь с такой почтой уже существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Пользователь с такой почтой уже существует"
+
+  /leave_event/{event_id}:
+    delete:
+      summary: Участник или организатор покидает мероприятие
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Участник или организатор покинул мероприятие
+          content:
+            application/json:
+              schema:
+                type: string
+        '410':
+          description: Не удалось покинуть мероприятие
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /delete_event/{event_id}:
+    delete:
+      summary: Создатель удаляет мероприятие
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Создатель удалил мероприятие
+          content:
+            application/json:
+              schema:
+                type: string
+        '410':
+          description: Не удалось удалить мероприятие
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /complete_event/{event_id}:
+    patch:
+      summary: Создатель завершает мероприятие
+      responses:
+        '200':
+          description: Создатель удалил мероприятие
+          content:
+            application/json:
+              schema:
+                type: string
+        '410':
+          description: Не удалось завершить мероприятие
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /events/{event_id}:
+    get:
+      summary: Зайти в карточку мероприятия
+      responses:
+        '200':
+          description: Данные мероприятия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Мероприятие не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /events/{event_id}/edit:
+    patch:
+      summary: Создатель редактирует мероприятие
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventEditor'
+      responses:
+        '201':
+          description: Данные мероприятия изменены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventEditor'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -214,6 +365,42 @@ components:
           type: string
           example: "участник"
 
+    # Редактирование мероприятия
+    EventEditor:
+      type: object
+      properties:
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        event_description:
+          type: string
+          maxLength: 254
+          example: Берите пледы и хорошее настроение!
+          default: "Описание не добавлено"
+        location:
+          type: string
+          maxLength: 100
+          example: Центральный парк
+          default: "место не указано"
+        event_date:
+          type: string
+          format: date
+          example: "2025-06-12"
+          description: Дата в формате YYYY-MM-DD
+        event_time:
+          type: string
+          format: time
+          example: "16:00"
+          x-format: HH:MM  #кастомное расширение
+          default: "время не указано"
+        chat_link:
+          type: string
+          maxLength: 32
+          example: "https://t.me/chat_id"
+          default: "не прикреплена"
+
    # Пользователь
     User:
       type: object
@@ -253,10 +440,33 @@ components:
       required:
 #        - user_id
         - login
-        - password
+#        - password
         - email
         - name
         - surname
+
+    UserEditor:
+      type: object
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 254
+          example: poposh01@mail.ru
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: Алина
+        surname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Смирнов
+        comment_money_transfer:
+          type: string
+          maxLength: 254
+          example: "На сбер: 89996362576"
 
     # Задача
     Task:
