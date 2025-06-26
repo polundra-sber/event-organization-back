@@ -4,6 +4,151 @@ info:
   description: Title
   version: 1.0.0
 servers:
-  - url: 'https'
-paths:
-  
+  - url: 'http://localhost:8080/api'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1123
+        login:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+        password:
+          type: string
+          minLength: 8
+          maxLength: 20
+          example: An1@!#fhv11
+        email:
+          type: string
+          minLength: 1
+          maxLength: 254
+          example: poposh01@mail.ru
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: Алина
+        surname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Смирнов
+        comment_money_transfer:
+          type: string
+          maxLength: 254
+          example: "На сбер: 89996362576"
+      required:
+        - user_id
+        - login
+        - password
+        - email
+        - name
+        - surname
+
+    Task:
+      type: object
+      properties:
+        task_id:
+          type: integer
+          example: 143
+        task_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Заказать торт
+        task_description:
+          type: string
+          maxLength: 254
+          example: Торт без орехов и без апельсина
+        status_id:
+          type: integer
+          example: 2
+        event_id:
+          type: integer
+          example: 1123
+        responsible_user:
+          type: integer
+          example: 1234
+        deadline_date:
+          type: string
+          format: date
+          example: 12.06.2025
+        deadline_time:
+          type: string
+          format: time
+          example: 16:00
+      required:
+        - task_id
+        - task_name
+        - status_id
+        - event_id
+
+    Purchase:
+      type: object
+      properties:
+        purchase_id:
+          type: integer
+          example: 1
+        purchase_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Огурцы
+        purchase_description:
+          type: string
+          maxLength: 254
+          example: Купите 2кг
+        cost:
+          type: number
+          format: float
+          example: 123.99
+        responsible_user:
+          type: integer
+          example: 11238
+        event_id:
+          type: integer
+          example: 1123
+      required:
+        - purchase_id
+        - name
+        - event_id
+
+    Receipt:
+      type: object
+      properties:
+        receipt_id:
+          type: integer
+          example: 1
+        file_path:
+          type: string
+          example: /home/user1234/public_html/images/file.png
+      required:
+        - receipt_id
+        - file_path
+
+    EventUserList:
+      type: object
+      properties:
+        event_user_list_id:
+          type: integer
+          example: 1
+        event_id:
+          type: integer
+          example: 1123
+        user_id:
+          type: integer
+          example: 1123
+        role_id:
+          type: integer
+          example: 1
+      required:
+        - event_user_list_id
+        - event_id
+        - user_id
+        - role_id
