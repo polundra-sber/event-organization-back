@@ -6,18 +6,173 @@ info:
 servers:
   - url: 'https'
 paths:
+  /auth/register:
+    post:
+      summary: Регистрация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Пользователь зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT токен пользователя
+        '409':
+          description: Пользователь уже зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Пользователь с таким логином уже существует. Пользователь с такой почтой уже существует
+  /auth/login:
+    post:
+      summary: Авторизация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Пользователь авторизовался
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT токен пользователя
+        '401':
+          description: Пользователь указал неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Неверный логин или пароль
+  /events:
+    get:
+      summary: Получить список мероприятий
+      description: Возвращает список всех мероприятий пользователя
+      responses:
+        '200':
+          description: Список мероприятий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+
+  /create_event:
+    post:
+      summary: Создать новое мероприятие
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '201':
+          description: Мероприятие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+
+  /find_event/{event_id}:
+    get:
+      summary: Поиск мероприятия по идентификатору
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Карточка мероприятия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /join_event_request/{event_id}:
+    post:
+      summary: Отправка заявки для присоединения к мероприятию
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Заявка на присоединение отправлена
+          content:
+            application/json:
+              schema:
+                type: string
+        '409':
+          description: Повторное присоединение к мероприятию
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Вы уже присоединены к данному мероприятию"
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
 
     # Мероприятие
     Event:
       type: object
       required:
-        - event_id
+#        - event_id
         - event_name
-        - date
-        - status
+        - event_date
+#        - status
       properties:
         event_id:
           type: integer
@@ -31,13 +186,14 @@ components:
           maxLength: 254
           example: Берите пледы и хорошее настроение!
           default: "Описание не добавлено"
-        status_id:
-          type: integer
+        event_status_name:
+          type: string
+          example: активно
         location:
           type: string
           maxLength: 100
           example: Центральный парк
-          default: "Место не указано"
+          default: "место не указано"
         event_date:
           type: string
           format: date
@@ -48,20 +204,23 @@ components:
           format: time
           example: "16:00"
           x-format: HH:MM  #кастомное расширение
-          default: "Время не указано"
+          default: "время не указано"
         chat_link:
           type: string
           maxLength: 32
           example: "https://t.me/chat_id"
-          default: "Ссылка не прикреплена"
+          default: "не прикреплена"
+        role_name:
+          type: string
+          example: "участник"
 
    # Пользователь
     User:
       type: object
       properties:
-        user_id:
-          type: integer
-          example: 1123
+#        user_id:
+#          type: integer
+#          example: 1123
         login:
           type: string
           minLength: 3
@@ -92,7 +251,7 @@ components:
           maxLength: 254
           example: "На сбер: 89996362576"
       required:
-        - user_id
+#        - user_id
         - login
         - password
         - email
