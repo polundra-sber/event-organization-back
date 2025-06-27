@@ -6,6 +6,25 @@ info:
 servers:
   - url: 'https'
 paths:
+  /events/{event_id}/role_and_status:
+    get:
+      summary: Получить роль пользователя в данном мероприятии и статус мероприятия
+      responses:
+        '200':
+          description: Роль и статус
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role_name:
+                    type: string
+                    example: "участник"
+                  event_status_name:
+                    type: string
+                    example: "активно"
+
+
   /auth/register:
     post:
       summary: Регистрация пользователя
@@ -100,7 +119,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
+                $ref: '#/components/schemas/EventEditor'
 
   /find_event/{event_id}:
     get:
@@ -429,7 +448,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Purchase'
+                  $ref: '#/components/schemas/PurchaseListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -440,7 +459,6 @@ paths:
                   error:
                     type: string
                     default: "Мероприятие не найдено"
-
 
   /events/{event_id}/purchases_list/add_purchase:
     post:
@@ -456,32 +474,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                purchase_name:
-                  required: true
-                  type: string
-                  minLength: 1
-                  maxLength: 50
-                  example: Огурцы
-                purchase_description:
-                  required: false
-                  type: string
-                  maxLength: 254
-                  example: Купите 2 кг
-                responsible_user:
-                  required: false
-                  type: string
-                  minLength: 3
-                  maxLength: 20
-                  example: main_player
+              $ref: '#/components/schemas/PurchaseListItemCreator'
       responses:
         '201':
           description: Позиция покупки успешно добавлена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purchase'
+                $ref: '#/components/schemas/PurchaseListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -493,12 +493,17 @@ paths:
                     type: string
                     default: "Мероприятие не найдено"
 
-  /events/{event_id}/purchases_list/edit_purchase/{purchase_id}:
+  /events/{event_id}/purchases_list/{purchase_id}/edit_purchase:
     patch:
-      summary: Добавить новую позицию покупки
+      summary: Изменить позицию покупки
       parameters:
         - in: path
           name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
           required: true
           schema:
             type: integer
@@ -507,32 +512,74 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                purchase_name:
-                  required: true
-                  type: string
-                  minLength: 1
-                  maxLength: 50
-                  example: Огурцы
-                purchase_description:
-                  required: false
-                  type: string
-                  maxLength: 254
-                  example: Купите 2 кг
-                responsible_user:
-                  required: false
-                  type: string
-                  minLength: 3
-                  maxLength: 20
-                  example: main_player
+              $ref: '#/components/schemas/PurchaseListItemEditor'
       responses:
-        '201':
-          description: Позиция покупки успешно добавлена
+        '200':
+          description: Позиция покупки успешно изменена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purchase'
+                $ref: '#/components/schemas/PurchaseListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/purchases_list/{purchase_id}/delete_purchase:
+    delete:
+      summary: Удалить позицию покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Позиция покупки успешно удалена
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/purchases_list/{purchase_id}/take_purchase:
+    patch:
+      summary: Пользователь берет позицию покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ответственный за покупку успешно изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseListItemResponsible'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -560,7 +607,7 @@ components:
         - event_id
         - event_name
         - event_date
-#        - status
+        - role_name
       properties:
         event_id:
           type: integer
@@ -804,8 +851,9 @@ components:
         - task_name
         - status_id
         - event_id
-    # Покупка
-    Purchase:
+
+    # Покупка в списке
+    PurchaseListItem:
       type: object
       properties:
         purchase_id:
@@ -820,20 +868,82 @@ components:
           type: string
           maxLength: 254
           example: Купите 2кг
-        cost:
-          type: number
-          format: float
-          example: 123.99
+#        cost:
+#          type: number
+#          format: float
+#          example: 123.99
         responsible_user:
-          type: integer
-          example: 11238
-        event_id:
-          type: integer
-          example: 1123
+          type: string
+          example: main_player
       required:
         - purchase_id
-        - name
-        - event_id
+        - purchase_name
+
+    PurchaseListItemResponsible:
+      type: object
+      properties:
+        purchase_id:
+          type: integer
+          example: 1
+        purchase_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Огурцы
+        purchase_description:
+          type: string
+          maxLength: 254
+          example: Купите 2кг
+        #        cost:
+        #          type: number
+        #          format: float
+        #          example: 123.99
+        responsible_user:
+          type: string
+          example: main_player
+      required:
+        - purchase_id
+        - purchase_name
+        - responsible_user
+
+    PurchaseListItemCreator:
+      type: object
+      properties:
+        purchase_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Огурцы
+        purchase_description:
+          type: string
+          maxLength: 254
+          example: Купите 2 кг
+        responsible_user:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+      required:
+        - purchase_name
+
+    PurchaseListItemEditor:
+      type: object
+      properties:
+        purchase_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Огурцы
+        purchase_description:
+          type: string
+          maxLength: 254
+          example: Купите 2 кг
+        responsible_user:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+
     # Чек
     Receipt:
       type: object
