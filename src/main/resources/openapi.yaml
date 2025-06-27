@@ -308,7 +308,7 @@ paths:
                 $ref: '#/components/schemas/EventEditor'
 
 
-  /events/{event_id}/participant_list:
+  /events/{event_id}/participants_list:
     get:
       summary: Получить список участников мероприятия
       description: Возвращает список всех участников мероприятия
@@ -331,7 +331,7 @@ paths:
                   error:
                     type: string
 
-  /events/{event_id}/add_participant:
+  /events/{event_id}/participants_list/add_participant:
     get:
       summary: Найти первые 10 пользователей для добавления
       parameters:
@@ -363,30 +363,29 @@ paths:
                   type: object
                   properties:
                     login:
+                      required: true
                       type: string
                       minLength: 3
                       maxLength: 20
                       example: main_player
                     email:
+                      required: true
                       type: string
                       minLength: 1
                       maxLength: 254
                       example: poposh01@mail.ru
                     name:
+                      required: true
                       type: string
                       minLength: 1
                       maxLength: 20
                       example: Алина
                     surname:
+                      required: true
                       type: string
                       minLength: 1
                       maxLength: 50
                       example: Смирнов
-                  required:
-                    - login
-                    - email
-                    - name
-                    - surname
         '400':
           description: Неверные параметры запроса
         '404':
@@ -413,22 +412,26 @@ paths:
         '404':
           description: Событие не найдено
 
-  #!!!!!!!!!!!!!!!!!!!!!!
-  /events/{event_id}/purchases:
+  /events/{event_id}/purchases_list:
     get:
-      summary: Получить список покупок мероприятия
-      description: Возвращает список всех участников мероприятия
+      summary: Получить список покупок
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
-          description: Список участников
+          description: Список покупок
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
-        '410':
-          description: Не удалось просмотреть список участников
+                  $ref: '#/components/schemas/Purchase'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
           content:
             application/json:
               schema:
@@ -436,6 +439,110 @@ paths:
                 properties:
                   error:
                     type: string
+                    default: "Мероприятие не найдено"
+
+
+  /events/{event_id}/purchases_list/add_purchase:
+    post:
+      summary: Добавить новую позицию покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purchase_name:
+                  required: true
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  example: Огурцы
+                purchase_description:
+                  required: false
+                  type: string
+                  maxLength: 254
+                  example: Купите 2 кг
+                responsible_user:
+                  required: false
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: main_player
+      responses:
+        '201':
+          description: Позиция покупки успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/purchases_list/edit_purchase/{purchase_id}:
+    patch:
+      summary: Добавить новую позицию покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purchase_name:
+                  required: true
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  example: Огурцы
+                purchase_description:
+                  required: false
+                  type: string
+                  maxLength: 254
+                  example: Купите 2 кг
+                responsible_user:
+                  required: false
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: main_player
+      responses:
+        '201':
+          description: Позиция покупки успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
 
 components:
   securitySchemes:
@@ -630,7 +737,33 @@ components:
           type: string
           maxLength: 254
           example: "На сбер: 89996362576"
-
+    UserDemo:
+      type: object
+      properties:
+        login:
+          required: true
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+        email:
+          required: true
+          type: string
+          minLength: 1
+          maxLength: 254
+          example: poposh01@mail.ru
+        name:
+          required: true
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: Алина
+        surname:
+          required: true
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Смирнов
     # Задача
     Task:
       type: object
