@@ -56,7 +56,7 @@ paths:
                     type: string
                     example: "активно"
 
-
+  # auth
   /auth/register:
     post:
       tags:
@@ -126,6 +126,9 @@ paths:
                   error:
                     type: string
                     description: Неверный логин или пароль
+
+  # events
+
   /events:
     get:
       tags:
@@ -219,6 +222,8 @@ paths:
                     type: string
                     default: "Вы уже присоединены к данному мероприятию"
 
+  #profile
+
   /profile:
     get:
       tags:
@@ -258,6 +263,8 @@ paths:
                   error:
                     type: string
                     default: "Пользователь с такой почтой уже существует"
+
+  # this event
 
   /leave_event/{event_id}:
     delete:
@@ -384,7 +391,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EventEditor'
 
-
+  # participants list
   /events/{event_id}/participants_list:
     get:
       tags:
@@ -494,6 +501,8 @@ paths:
           description: Неверный формат данных или некорректные логины
         '404':
           description: Событие не найдено
+
+  # purchases list
 
   /events/{event_id}/purchases_list:
     get:
@@ -665,6 +674,8 @@ paths:
                     type: string
                     default: "Мероприятие не найдено"
 
+  # cost alloc list
+
   /events/{event_id}/cost_allocation_list:
     get:
       tags:
@@ -780,6 +791,177 @@ paths:
         '404':
           description: Событие не найдено
 
+  # stuffs list
+
+  /events/{event_id}/stuffs_list:
+    get:
+      tags:
+        - Список вещей
+      summary: Получить список вещей
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список вещей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StuffListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/stuffs_list/add_stuff:
+    post:
+      tags:
+        - Список вещей
+      summary: Добавить новую позицию вещь
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StuffListItemCreator'
+      responses:
+        '201':
+          description: Позиция вещи успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StuffListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/stuffs_list/{stuff_id}/edit_stuff:
+    patch:
+      tags:
+        - Список вещей
+      summary: Изменить позицию вещи
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: stuff_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StuffListItemEditor'
+      responses:
+        '200':
+          description: Позиция вещи успешно изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/stuffs_list/{stuff_id}/delete_stuff:
+    delete:
+      tags:
+        - Список вещей
+      summary: Удалить позицию вещи
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: stuff_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Позиция вещи успешно удалена
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/stuffs_list/{stuff_id}/take_stuff:
+    patch:
+      tags:
+        - Список вещей
+      summary: Пользователь берет позицию вещи
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: stuff_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ответственный за вещь успешно изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StuffListItemResponsible'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
 
 components:
   securitySchemes:
@@ -1195,11 +1377,10 @@ components:
         - user_id
         - role_id
     # Вещь
-    Stuff:
+    StuffListItem:
       type: object
       required:
         - stuff_id
-        - event_id
         - stuff_name
         - responsible_user
       properties:
@@ -1215,10 +1396,71 @@ components:
           maxLength: 254
           example: 5 метров, канатная
           default: "Описание не добавлено"
-        event_id:
-          type: integer
         responsible_user:
+          type: string
+
+    StuffListItemCreator:
+      type: object
+      properties:
+        stuff_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Веревка
+        stuff_description:
+          type: string
+          maxLength: 254
+          example: 5 метров, канатная
+          default: "Описание не добавлено"
+        responsible_user:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+      required:
+        - stuff_name
+
+    StuffListItemEditor:
+      type: object
+      properties:
+        stuff_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Веревка
+        stuff_description:
+          type: string
+          maxLength: 254
+          example: 5 метров, канатная
+          default: "Описание не добавлено"
+        responsible_user:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+
+    StuffListItemResponsible:
+      type: object
+      properties:
+        stuff_id:
           type: integer
+        stuff_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Веревка
+        stuff_description:
+          type: string
+          maxLength: 254
+          example: 5 метров, канатная
+          default: "Описание не добавлено"
+        responsible_user:
+          type: string
+          example: main_player
+      required:
+        - stuff_id
+        - stuff_name
+        - stuff_user
     # Долг
     Debt:
       type: object
