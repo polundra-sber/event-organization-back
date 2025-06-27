@@ -887,7 +887,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PurchaseListItem'
+                $ref: '#/components/schemas/StuffListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -952,6 +952,179 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StuffListItemResponsible'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+
+  # task list
+
+  /events/{event_id}/tasks_list:
+    get:
+      tags:
+        - Список задач
+      summary: Получить список задач
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/tasks_list/add_tasks:
+    post:
+      tags:
+        - Список задач
+      summary: Добавить новую задачу
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListItemCreator'
+      responses:
+        '201':
+          description: Задача успешно добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/tasks_list/{task_id}/edit_task:
+    patch:
+      tags:
+        - Список задач
+      summary: Изменить задачу
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListItemEditor'
+      responses:
+        '200':
+          description: Позиция вещи успешно изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/tasks_list/{task_id}/delete_task:
+    delete:
+      tags:
+        - Список задач
+      summary: Удалить задачу
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Задача успешно удалена
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/tasks_list/{task_id}/take_task:
+    patch:
+      tags:
+        - Список задач
+      summary: Пользователь берет задачу
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ответственный за задачу успешно изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListItemResponsible'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -1184,8 +1357,12 @@ components:
           maxLength: 50
           example: Смирнов
     # Задача
-    Task:
+    TaskListItem:
       type: object
+      required:
+        - task_id
+        - task_name
+        - status_id
       properties:
         task_id:
           type: integer
@@ -1203,9 +1380,35 @@ components:
         status_id:
           type: integer
           example: 2
-        event_id:
+        responsible_user:
           type: integer
-          example: 1123
+          example: 1234
+          default: "Не назначен"
+        deadline_date:
+          type: string
+          format: date
+          example: 12.06.2025
+        deadline_time:
+          type: string
+          format: time
+          example: 16:00
+
+    TaskListItemCreator:
+      type: object
+      properties:
+        task_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Заказать торт
+        task_description:
+          type: string
+          maxLength: 254
+          example: Торт без орехов и без апельсина
+          default: "Описание не добавлено"
+        status_id:
+          type: integer
+          example: 2
         responsible_user:
           type: integer
           example: 1234
@@ -1219,10 +1422,59 @@ components:
           format: time
           example: 16:00
       required:
+        - task_name
+
+    TaskListItemEditor:
+      type: object
+      properties:
+        task_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Заказать торт
+        task_description:
+          type: string
+          maxLength: 254
+          example: Торт без орехов и без апельсина
+          default: "Описание не добавлено"
+        status_id:
+          type: integer
+          example: 2
+        responsible_user:
+          type: integer
+          example: 1234
+          default: "Не назначен"
+        deadline_date:
+          type: string
+          format: date
+          example: 12.06.2025
+        deadline_time:
+          type: string
+          format: time
+          example: 16:00
+
+    TaskListItemResponsible:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        task_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Заказать торт
+        task_description:
+          type: string
+          maxLength: 254
+          example: Торт без орехов и без апельсина
+          default: "Описание не добавлено"
+        responsible_user:
+          type: string
+          example: main_player
+      required:
         - task_id
         - task_name
-        - status_id
-        - event_id
+        - responsible_user
 
     # Покупка в списке
     PurchaseListItem:
@@ -1460,7 +1712,8 @@ components:
       required:
         - stuff_id
         - stuff_name
-        - stuff_user
+        - responsible_user
+
     # Долг
     Debt:
       type: object
