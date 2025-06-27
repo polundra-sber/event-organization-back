@@ -165,7 +165,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserProfile'
     patch:
       summary: Редактирование профиля
       requestBody:
@@ -307,6 +307,136 @@ paths:
               schema:
                 $ref: '#/components/schemas/EventEditor'
 
+
+  /events/{event_id}/participant_list:
+    get:
+      summary: Получить список участников мероприятия
+      description: Возвращает список всех участников мероприятия
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '410':
+          description: Не удалось просмотреть список участников
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /events/{event_id}/add_participant:
+    get:
+      summary: Найти первые 10 пользователей для добавления
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: text
+          required: true
+          description: Текст из поисковой строки
+          schema:
+            type: string
+        - in: query
+          name: seq
+          required: true
+          description: Порядковый номер "пачки" участников
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Пачка участников
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                      minLength: 3
+                      maxLength: 20
+                      example: main_player
+                    email:
+                      type: string
+                      minLength: 1
+                      maxLength: 254
+                      example: poposh01@mail.ru
+                    name:
+                      type: string
+                      minLength: 1
+                      maxLength: 20
+                      example: Алина
+                    surname:
+                      type: string
+                      minLength: 1
+                      maxLength: 50
+                      example: Смирнов
+                  required:
+                    - login
+                    - email
+                    - name
+                    - surname
+        '400':
+          description: Неверные параметры запроса
+        '404':
+          description: Пользователь не найден
+    post:
+      summary: Добавить выбранных участников
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                description: Логин участник
+                type: string
+                minLength: 3
+                maxLength: 20
+                example: main_player
+      responses:
+        '200':
+          description: Участники успешно добавлены
+        '400':
+          description: Неверный формат данных или некорректные логины
+        '404':
+          description: Событие не найдено
+
+  #!!!!!!!!!!!!!!!!!!!!!!
+  /events/{event_id}/purchases:
+    get:
+      summary: Получить список покупок мероприятия
+      description: Возвращает список всех участников мероприятия
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '410':
+          description: Не удалось просмотреть список участников
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
 components:
   securitySchemes:
     BearerAuth:
@@ -320,7 +450,7 @@ components:
     Event:
       type: object
       required:
-#        - event_id
+        - event_id
         - event_name
         - event_date
 #        - status
@@ -444,6 +574,39 @@ components:
         - email
         - name
         - surname
+
+    UserProfile:
+      type: object
+      required:
+        - login
+        - email
+        - name
+        - surname
+      properties:
+        login:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+        email:
+          type: string
+          minLength: 1
+          maxLength: 254
+          example: poposh01@mail.ru
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: Алина
+        surname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Смирнов
+        comment_money_transfer:
+          type: string
+          maxLength: 254
+          example: "На сбер: 89996362576"
 
     UserEditor:
       type: object
