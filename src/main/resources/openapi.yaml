@@ -20,6 +20,7 @@ tags:
   - name: Список покупок
   - name: Список задач
   - name: Список вещей
+  - name: Список распределения расходов
   - name: Мои долги
   - name: Мне должны
   - name: Мои покупки
@@ -34,6 +35,12 @@ paths:
       tags:
        - Получение роли пользователя и статуса мероприятия
       summary: Получить роль пользователя в данном мероприятии и статус мероприятия
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
           description: Роль и статус
@@ -658,6 +665,122 @@ paths:
                     type: string
                     default: "Мероприятие не найдено"
 
+  /events/{event_id}/cost_allocation_list:
+    get:
+      tags:
+        - Список распределения расходов
+      summary: Получить список распределения расходов
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список распределения расходов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CostAllocationListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/cost_allocation_list/{purchase_id}/participants:
+    get:
+      tags:
+        - Список распределения расходов
+      summary: Получить список участников для данной покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDemo'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+    delete:
+      tags:
+        - Список распределения расходов
+      summary: Удаление участников для данной покупки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                description: Логин участника
+                type: string
+                minLength: 3
+                maxLength: 20
+                example: main_player
+      responses:
+        '200':
+          description: Участники успешно добавлены
+        '400':
+          description: Неверный формат данных или некорректные логины
+        '404':
+          description: Событие не найдено
+
+  /events/{event_id}/cost_allocation_list/{purchase_id}/add_participants:
+    post:
+      tags:
+        - Список распределения расходов
+      summary: Добавить выбранных участников
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                description: Логин участника
+                type: string
+                minLength: 3
+                maxLength: 20
+                example: main_player
+      responses:
+        '200':
+          description: Участники успешно добавлены
+        '400':
+          description: Неверный формат данных или некорректные логины
+        '404':
+          description: Событие не найдено
+
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1010,6 +1133,32 @@ components:
           minLength: 3
           maxLength: 20
           example: main_player
+
+    CostAllocationListItem:
+      type: object
+      properties:
+        purchase_id:
+          type: integer
+          example: 1
+        purchase_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Огурцы
+        responsible_user:
+          type: string
+          minLength: 3
+          maxLength: 20
+          example: main_player
+        cost:
+          type: number
+          format: float
+          example: 123.99
+      required:
+        - purchase_id
+        - purchase_name
+        - responsible_user
+        - cost
 
     # Чек
     Receipt:
