@@ -21,6 +21,7 @@ tags:
   - name: Список задач
   - name: Список вещей
   - name: Список распределения расходов
+  - name: Список расходов
   - name: Мои долги
   - name: Мне должны
   - name: Мои покупки
@@ -791,6 +792,18 @@ paths:
         '404':
           description: Событие не найдено
 
+  /events/{event-id}/cost-allocation-list/send-cost-allocation-list:
+    post:
+      tags:
+        - Список распределения расходов
+      summary: Отправить расчет
+      description: Бэк меняет статус cost_allocated на true (окончательное распределение расходов)
+      responses:
+        '200':
+          description: Сохранили окончательный расчет
+        '404':
+          description: Событие не найдено
+
   # stuffs list
 
   /events/{event_id}/stuffs_list:
@@ -1135,6 +1148,141 @@ paths:
                   error:
                     type: string
                     default: "Мероприятие не найдено"
+
+  ################
+  /events/{event_id}/cost_list:
+    get:
+      tags:
+        - Список расходов
+      summary: Получить список расходов
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список расходов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cost-allocation-list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CostAllocationListItem'
+                  expenses-existence: #смотрим по таблице покупок с таким event_id
+                    type: bool
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/cost_list/{purchase_id}/participants:
+    get:
+      tags:
+        - Список расходов
+      summary: Получить список участников для данной покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDemo'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+    /events/{event_id}/get-receipt:
+      get:
+        tags:
+          - Список расходов
+          - Список распределения расходов
+        summary: Получить чек покупки по receipt_id
+        parameters:
+          - in: path
+            name: event_id
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Фото чека покупки
+            content:
+              #####Тут должен определенный формат картинки возвращаться, в зависимости от того, как хранить будем
+          '404':
+            description: Мероприятие с данным идентификатором не найдено
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+                      default: "Мероприятие не найдено"
+
+
+
+  /events/{event_id}/cost_list_personal:
+    get:
+      tags:
+        - Список расходов
+      summary: Получить список расходов по текущему пользователю
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список расходов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CostAllocationListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
 
 components:
   securitySchemes:
@@ -1588,11 +1736,16 @@ components:
           type: number
           format: float
           example: 123.99
+        receipt_id: #null отдаем, если не прикреплен чек
+          type: integer
+          example: 1
+
       required:
         - purchase_id
         - purchase_name
         - responsible_user
         - cost
+        - receipt_id
 
     # Чек
     Receipt:
