@@ -504,7 +504,6 @@ paths:
           description: Событие не найдено
 
   # purchases list
-
   /events/{event_id}/purchases_list:
     get:
       tags:
@@ -1149,7 +1148,7 @@ paths:
                     type: string
                     default: "Мероприятие не найдено"
 
-  ################
+  # cost list
   /events/{event_id}/cost_list:
     get:
       tags:
@@ -1222,34 +1221,34 @@ paths:
                     type: string
                     default: "Мероприятие не найдено"
 
-    /events/{event_id}/get-receipt:
-      get:
-        tags:
-          - Список расходов
-          - Список распределения расходов
-        summary: Получить чек покупки по receipt_id
-        parameters:
-          - in: path
-            name: event_id
-            required: true
-            schema:
-              type: integer
-        responses:
-          '200':
-            description: Фото чека покупки
-            content:
-              #####Тут должен определенный формат картинки возвращаться, в зависимости от того, как хранить будем
-          '404':
-            description: Мероприятие с данным идентификатором не найдено
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    error:
-                      type: string
-                      default: "Мероприятие не найдено"
-
+  /events/{event_id}/get-receipt:
+    get:
+      tags:
+        - Список расходов
+        - Список распределения расходов
+        - Мои покупки
+      summary: Получить чек покупки по receipt_id
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Фото чека покупки
+          content:
+          #####Тут должен определенный формат картинки возвращаться, в зависимости от того, как хранить будем
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
 
 
   /events/{event_id}/cost_list_personal:
@@ -1284,6 +1283,398 @@ paths:
                     default: "Мероприятие не найдено"
 
 
+  # my purchases list
+  /events/my_purchases_list:
+    get:
+      tags:
+        - Мои покупки
+      summary: Получить список мои покупки
+      responses:
+        '200':
+          description: Мои покупки
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyPurchaseListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/my_purchases_list/{purchase_id}/deny_purchase:
+    delete:
+      tags:
+        - Мои покупки
+      summary: Отказаться от покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Вы успешно отказались от покупки
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+
+  /events/{event_id}/my_purchases_list/{purchase_id}/edit_purchase_cost:
+    patch:
+      tags:
+        - Мои покупки
+      summary: Изменить стоимость покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        application/json:
+          schema:
+            type: object
+            properties:
+              cost:
+                type: number
+                format: float
+                example: 123.99
+      responses:
+        '200':
+          description: Стоимость покупки успешно изменена
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/my_purchases_list/{purchase_id}/add_receipt:
+    post:
+      tags:
+        - Мои покупки
+      summary: Прикрепить чек к позициям покупок
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          ###ФОТО: тут список из фото какого-то формата: фото_чека_1, фото_чека_2
+      responses:
+        '201':
+          description: Чек успешно прикреплен к покупке
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+
+
+  # my tasks list
+  /events/my_tasks_list:
+    get:
+      tags:
+        - Мои задачи
+      summary: Получить список мои задачи
+      responses:
+        '200':
+          description: Мои задачи
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyTaskListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+  
+  /events/{event_id}/my_tasks_list/{task_id}/deny_task:
+    delete:
+      tags:
+        - Мои задачи
+      summary: Отказаться от задачи
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Вы успешно отказались от задачи
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+                    
+
+
+  /events/{event_id}/my_tasks_list/{task_id}/mark_task_completed:
+    patch:
+      tags:
+        - Мои задачи
+      summary: Пользователь отмечает задачу выполненной
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Статус задачи успешно изменен
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  
+  # my stuffs list
+  /events/my_stuffs_list:
+    get:
+      tags:
+        - Мои вещи
+      summary: Получить список моих вещей
+      responses:
+        '200':
+          description: Мои вещи
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyStuffListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+
+  /events/{event_id}/my_stuffs_list/{stuff_id}/deny_stuff:
+    delete:
+      tags:
+        - Мои вещи
+      summary: Отказаться от вещи
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: stuff_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Вы успешно отказались от вещи
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  # my debts
+  /events/my_debts_list:
+    get:
+      tags:
+        - Мои долги
+      summary: Получить список моих долгов
+      responses:
+        '200':
+          description: Мои долги
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyDebtListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/my_debts_list/{debt_id}/mark_debt_paid:
+    patch:
+      tags:
+        - Мои долги
+      summary: Пользователь отмечает долг оплаченным
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: debt_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Долг успешно отмечен оплаченным
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+
+  # my incomes
+  /events/my_incomes_list:
+    get:
+      tags:
+        - Мне должны
+      summary: Получить список мне должны
+      responses:
+        '200':
+          description: Мне должны
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyIncomeListItem'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+
+  /events/{event_id}/my_incomes_list/{debt_id}/mark_income_received:
+    patch:
+      tags:
+        - Мне должны
+      summary: Пользователь отмечает долг полученным
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: debt_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Долг успешно отмечен полученным
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Мероприятие не найдено"
+  
 components:
   securitySchemes:
     BearerAuth:
@@ -1477,6 +1868,7 @@ components:
           type: string
           maxLength: 254
           example: "На сбер: 89996362576"
+
     UserDemo:
       type: object
       properties:
@@ -1504,13 +1896,15 @@ components:
           minLength: 1
           maxLength: 50
           example: Смирнов
+
     # Задача
     TaskListItem:
       type: object
       required:
         - task_id
         - task_name
-        - status_id
+        - task_status_name
+        - deadline_date
       properties:
         task_id:
           type: integer
@@ -1525,12 +1919,10 @@ components:
           maxLength: 254
           example: Торт без орехов и без апельсина
           default: "Описание не добавлено"
-        status_id:
-          type: integer
-          example: 2
+        task_status_name:
+          type: string
         responsible_user:
-          type: integer
-          example: 1234
+          type: string
           default: "Не назначен"
         deadline_date:
           type: string
@@ -1554,12 +1946,10 @@ components:
           maxLength: 254
           example: Торт без орехов и без апельсина
           default: "Описание не добавлено"
-        status_id:
-          type: integer
-          example: 2
+        task_status_name:
+          type: string
         responsible_user:
-          type: integer
-          example: 1234
+          type: string
           default: "Не назначен"
         deadline_date:
           type: string
@@ -1585,12 +1975,10 @@ components:
           maxLength: 254
           example: Торт без орехов и без апельсина
           default: "Описание не добавлено"
-        status_id:
-          type: integer
-          example: 2
+        task_status_name:
+          type: string
         responsible_user:
-          type: integer
-          example: 1234
+          type: string
           default: "Не назначен"
         deadline_date:
           type: string
@@ -1640,10 +2028,6 @@ components:
           type: string
           maxLength: 254
           example: Купите 2кг
-#        cost:
-#          type: number
-#          format: float
-#          example: 123.99
         responsible_user:
           type: string
           example: main_player
@@ -1666,10 +2050,6 @@ components:
           type: string
           maxLength: 254
           example: Купите 2кг
-        #        cost:
-        #          type: number
-        #          format: float
-        #          example: 123.99
         responsible_user:
           type: string
           example: main_player
@@ -1760,6 +2140,7 @@ components:
       required:
         - receipt_id
         - file_path
+
     # Пользователи-мероприятия
     EventUserList:
       type: object
@@ -1781,6 +2162,7 @@ components:
         - event_id
         - user_id
         - role_id
+
     # Вещь
     StuffListItem:
       type: object
@@ -1803,6 +2185,7 @@ components:
           default: "Описание не добавлено"
         responsible_user:
           type: string
+          default: "Не назначен"
 
     StuffListItemCreator:
       type: object
@@ -1819,9 +2202,7 @@ components:
           default: "Описание не добавлено"
         responsible_user:
           type: string
-          minLength: 3
-          maxLength: 20
-          example: main_player
+          default: "Не назначен"
       required:
         - stuff_name
 
@@ -1840,9 +2221,7 @@ components:
           default: "Описание не добавлено"
         responsible_user:
           type: string
-          minLength: 3
-          maxLength: 20
-          example: main_player
+          default: "Не назначен"
 
     StuffListItemResponsible:
       type: object
@@ -1861,13 +2240,13 @@ components:
           default: "Описание не добавлено"
         responsible_user:
           type: string
-          example: main_player
+          default: "Не назначен"
       required:
         - stuff_id
         - stuff_name
         - responsible_user
 
-    # Долг
+    # Долг - не используется
     Debt:
       type: object
       required:
@@ -1893,3 +2272,176 @@ components:
           example: 123.50
         event_id:
           type: integer
+
+
+    # Позиции в моих списках
+    MyPurchaseListItem:
+      type: object
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        purchase_id:
+          type: integer
+          example: 1
+        purchase_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Огурцы
+        responsible_user:
+          type: string
+          example: main_player
+        cost:
+          type: number
+          format: float
+          example: 123.99
+        purchase_description:
+          type: string
+          maxLength: 254
+          example: Купите 2кг
+      required:
+        - purchase_id
+        - purchase_name
+        - event_id
+        - event_name
+
+    MyTaskListItem:
+      type: object
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        task_id:
+          type: integer
+          example: 143
+        task_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Заказать торт
+        deadline_date:
+          type: string
+          format: date
+          example: 12.06.2025
+        deadline_time:
+          type: string
+          format: time
+          example: 16:00
+        task_description:
+          type: string
+          maxLength: 254
+          example: Торт без орехов и без апельсина
+          default: "Описание не добавлено"
+        task_status_name:
+          type: string
+          default: не выполнена
+        required:
+          - task_id
+          - task_name
+          - event_id
+          - event_name
+          - deadline_date
+          - task_status_name
+    
+    MyStuffListItem:
+      event_id:
+        type: integer
+      event_name:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: Шашлыки
+      stuff_id:
+        type: integer
+      stuff_name:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: Веревка
+      stuff_description:
+        type: string
+        maxLength: 254
+        example: 5 метров, канатная
+        default: "Описание не добавлено"
+      required:
+        - event_id
+        - event_name
+        - stuff_id
+        - stuff_name
+    
+    MyDebtListItem:
+      event_id:
+        type: integer
+      event_name:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: Шашлыки
+      debt_id:
+        type: integer
+      recipient_id:
+        type: integer
+      recipient_name:
+        type: string
+      comment_money_transfer:
+        type: string
+      debt_status_name:
+        type: string
+        default: не оплачен
+      debt_amount:
+        type: number
+        format: float
+        minimum: 0
+        example: 123.50
+      required:
+        - event_id
+        - event_name
+        - debt_id
+        - recipient_id
+        - recipient_name
+        - comment_money_transfer
+        - debt_amount
+
+    MyIncomeListItem:
+      event_id:
+        type: integer
+      event_name:
+        type: string
+        minLength: 1
+        maxLength: 50
+        example: Шашлыки
+      debt_id:
+        type: integer
+      payer_id:
+        type: integer
+      payer_name:
+        type: string
+      debt_status_name:
+        type: string
+        default: не оплачен
+      debt_amount:
+        type: number
+        format: float
+        minimum: 0
+        example: 123.50
+      required:
+        - event_id
+        - event_name
+        - debt_id
+        - payer_id
+        - payer_name
+        - debt_amount
+
+    
+
+
+
