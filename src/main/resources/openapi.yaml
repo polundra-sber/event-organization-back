@@ -465,15 +465,6 @@ paths:
                 $ref: '#/components/schemas/EventNotExistResponse'
 
   /events/{event_id}/purchases-list/add-purchase:
-    get:
-      description: New endpoint
-      responses:
-        200:
-          description: New response
-          content:
-            application/json:
-              schema:
-                :
     post:
       tags:
         - Список покупок
@@ -1088,7 +1079,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/CostAllocationListItem'
                   expenses-existence: #смотрим по таблице покупок с таким event_id
-                    type: bool
+                    type: boolean
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
