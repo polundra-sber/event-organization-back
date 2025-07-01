@@ -92,6 +92,7 @@ paths:
       tags:
        - Authentication
       operationId: login
+      security: []  # отключает аутентификацию для этого endpoint'а
       summary: Авторизация пользователя
       requestBody:
         required: true
