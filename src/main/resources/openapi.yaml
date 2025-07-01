@@ -5,36 +5,39 @@ info:
   version: 1.0.0
 servers:
   - url: 'https'
-
+security:
+  - BearerAuth: []
 
 
 # Добавленные теги
 tags:
-  - name: Аутентификация
+  - name: Authentication
     description: Регистрация, авторизация и управление аккаунтом
-  - name: Профиль
+  - name: Profile
     description: Управление профилем пользователя
-  - name: Главная страница
+  - name: Home page
     description: Список мероприятий
-  - name: Список участников
-  - name: Список покупок
-  - name: Список задач
-  - name: Список вещей
-  - name: Список распределения расходов
-  - name: Список расходов
-  - name: Мои долги
-  - name: Мне должны
-  - name: Мои покупки
-  - name: Мои задачи
-  - name: Мои вещи
-  - name: Получение роли пользователя и статуса мероприятия
+  - name: Participants list
+  - name: Purchase list
+  - name: Task list
+  - name: Stuff list
+  - name: Cost allocation list
+  - name: Cost list
+  - name: My debts
+  - name: My incomes
+  - name: My purchases
+  - name: My tasks
+  - name: My stuffs
+  - name: User metadata
+    description: Получение роли пользователя и статуса мероприятия
 
 
 paths:
-  /events/{event_id}/role_and_status:
+  /events/{event_id}/user-metadata:
     get:
       tags:
-       - Получение роли пользователя и статуса мероприятия
+       - User metadata
+      operationId: getUserMetadata
       summary: Получить роль пользователя в данном мероприятии и статус мероприятия
       parameters:
         - in: path
@@ -48,20 +51,21 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  role_name:
-                    type: string
-                    example: "участник"
-                  event_status_name:
-                    type: string
-                    example: "активно"
+                $ref: '#/components/schemas/EventUserMetadata'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   # auth
   /auth/register:
     post:
       tags:
-        - Аутентификация
+        - Authentication
+      operationId: createUser
+      security: []  # отключает аутентификацию для этого endpoint'а
       summary: Регистрация пользователя
       requestBody:
         required: true
@@ -75,65 +79,48 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    description: JWT токен пользователя
+                $ref: '#/components/schemas/AuthSuccessResponse'
         '409':
           description: Пользователь уже зарегистрирован
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Пользователь с таким логином уже существует. Пользователь с такой почтой уже существует
+                $ref: '#/components/schemas/UserAlreadyExistResponse'
+
   /auth/login:
     post:
       tags:
-       - Аутентификация
+       - Authentication
+      operationId: login
+      security: []  # отключает аутентификацию для этого endpoint'а
       summary: Авторизация пользователя
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                login:
-                  type: string
-                password:
-                  type: string
+              $ref: '#/components/schemas/UserLogin'
       responses:
         '201':
           description: Пользователь авторизовался
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    description: JWT токен пользователя
+                $ref: '#/components/schemas/AuthSuccessResponse'
         '401':
           description: Пользователь указал неверный логин или пароль
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Неверный логин или пароль
+                $ref: '#/components/schemas/AuthUnsuccessResponse'
 
   # events
 
   /events:
     get:
       tags:
-        - Главная страница
+        - Home page
+      operationId: getEvents
       summary: Получить список мероприятий
       description: Возвращает список всех мероприятий пользователя
       responses:
@@ -146,10 +133,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/Event'
 
-  /create_event:
+  /create-event:
     post:
       tags:
-        - Главная страница
+        - Home page
+      operationId: createEvent
       summary: Создать новое мероприятие
       requestBody:
         required: true
@@ -165,10 +153,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/EventEditor'
 
-  /find_event/{event_id}:
+  /find-event/{event_id}:
     get:
       tags:
-        - Главная страница
+        - Home page
+      operationId: findEventById
       summary: Поиск мероприятия по идентификатору
       parameters:
         - in: path
@@ -182,22 +171,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
+                $ref: '#/components/schemas/EventPreview'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /join_event_request/{event_id}:
+  /join-event-request/{event_id}:
     post:
       tags:
-        - Главная страница
+        - Home page
+      operationId: sendJoinEventRequest
       summary: Отправка заявки для присоединения к мероприятию
       parameters:
         - in: path
@@ -211,24 +197,27 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/SuccessEventJoining'
         '409':
           description: Повторное присоединение к мероприятию
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Вы уже присоединены к данному мероприятию"
+                $ref: '#/components/schemas/EventSecondJoining'
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   #profile
 
   /profile:
     get:
       tags:
-        - Профиль
+        - Profile
+      operationId: getUserProfile
       summary: Вход в личный профиль
       responses:
         '200':
@@ -239,7 +228,8 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
     patch:
       tags:
-        - Профиль
+        - Profile
+      operationId: editUserProfile
       summary: Редактирование профиля
       requestBody:
         required: true
@@ -259,18 +249,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Пользователь с такой почтой уже существует"
+                $ref: '#/components/schemas/UserAlreadyExistResponse'
 
   # this event
 
-  /leave_event/{event_id}:
+  /leave-event/{event_id}:
     delete:
       tags:
-        - Главная страница
+        - Home page
+      operationId: leaveEvent
       summary: Участник или организатор покидает мероприятие
       parameters:
         - in: path
@@ -281,24 +268,20 @@ paths:
       responses:
         '200':
           description: Участник или организатор покинул мероприятие
-          content:
-            application/json:
-              schema:
-                type: string
         '410':
           description: Не удалось покинуть мероприятие
+        '404':
+          description: Мероприятие с данным идентификатором не найдено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /delete_event/{event_id}:
+  /delete-event/{event_id}:
     delete:
       tags:
-        - Главная страница
+        - Home page
+      operationId: deleteEvent
       summary: Создатель удаляет мероприятие
       parameters:
         - in: path
@@ -309,47 +292,39 @@ paths:
       responses:
         '200':
           description: Создатель удалил мероприятие
-          content:
-            application/json:
-              schema:
-                type: string
         '410':
           description: Не удалось удалить мероприятие
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
 
-  /complete_event/{event_id}:
+  /complete-event/{event_id}:
     patch:
       tags:
-        - Главная страница
+        - Home page
+      operationId: completeEvent
       summary: Создатель завершает мероприятие
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
-          description: Создатель удалил мероприятие
-          content:
-            application/json:
-              schema:
-                type: string
+          description: Создатель успешно завершил мероприятие
         '410':
           description: Не удалось завершить мероприятие
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
 
   /events/{event_id}:
     get:
       tags:
-        - Главная страница
+        - Home page
+      operationId: getEventById
       summary: Зайти в карточку мероприятия
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
           description: Данные мероприятия
@@ -362,15 +337,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
+                $ref: '#/components/schemas/EventNotExistResponse'
+
 
   /events/{event_id}/edit:
     patch:
       tags:
-        - Главная страница
+        - Home page
+      operationId: editEvent
       summary: Создатель редактирует мероприятие
       parameters:
         - in: path
@@ -393,15 +367,22 @@ paths:
                 $ref: '#/components/schemas/EventEditor'
 
   # participants list
-  /events/{event_id}/participants_list:
+  /events/{event_id}/participants-list:
     get:
       tags:
-        - Список участников
+        - Participants list
+      operationId: getEventParticipantsList
       summary: Получить список участников мероприятия
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       description: Возвращает список всех участников мероприятия
       responses:
         '200':
-          description: Список участников
+          description: Participants list
           content:
             application/json:
               schema:
@@ -410,19 +391,13 @@ paths:
                   $ref: '#/components/schemas/User'
         '410':
           description: Не удалось просмотреть список участников
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
 
-  /events/{event_id}/participants_list/add_participant:
+  /events/{event_id}/participants-list/add-participant:
     get:
       tags:
-        - Список участников
-      summary: Найти первые 10 пользователей для добавления
+        - Participants list
+      operationId: searchUsers
+      summary: Найти первых 10 пользователей для добавления
       parameters:
         - in: path
           name: event_id
@@ -443,58 +418,34 @@ paths:
             type: integer
       responses:
         '200':
-          description: Пачка участников
+          description: Пачка из 10 участников
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    login:
-                      required: true
-                      type: string
-                      minLength: 3
-                      maxLength: 20
-                      example: main_player
-                    email:
-                      required: true
-                      type: string
-                      minLength: 1
-                      maxLength: 254
-                      example: poposh01@mail.ru
-                    name:
-                      required: true
-                      type: string
-                      minLength: 1
-                      maxLength: 20
-                      example: Алина
-                    surname:
-                      required: true
-                      type: string
-                      minLength: 1
-                      maxLength: 50
-                      example: Смирнов
+                  $ref: '#/components/schemas/UserDemo'
         '400':
           description: Неверные параметры запроса
         '404':
           description: Пользователь не найден
     post:
       tags:
-        - Список участников
+        - Participants list
+      operationId: addParticipants
       summary: Добавить выбранных участников
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                description: Логин участник
-                type: string
-                minLength: 3
-                maxLength: 20
-                example: main_player
+              $ref: '#/components/schemas/AddParticipantsRequest'
       responses:
         '200':
           description: Участники успешно добавлены
@@ -504,10 +455,11 @@ paths:
           description: Событие не найдено
 
   # purchases list
-  /events/{event_id}/purchases_list:
+  /events/{event_id}/purchases-list:
     get:
       tags:
-        - Список покупок
+        - Purchase list
+      operationId: getPurchasesList
       summary: Получить список покупок
       parameters:
         - in: path
@@ -517,7 +469,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список покупок
+          description: Purchase list
           content:
             application/json:
               schema:
@@ -529,16 +481,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/purchases_list/add_purchase:
+  /events/{event_id}/purchases-list/add-purchase:
     post:
       tags:
-        - Список покупок
+        - Purchase list
+      operationId: addPurchaseToPurchasesList
       summary: Добавить новую позицию покупки
       parameters:
         - in: path
@@ -564,16 +513,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/purchases_list/{purchase_id}/edit_purchase:
+  /events/{event_id}/purchases-list/{purchase_id}/edit-purchase:
     patch:
       tags:
-        - Список покупок
+        - Purchase list
+      operationId: editPurchaseInPurchasesList
       summary: Изменить позицию покупки
       parameters:
         - in: path
@@ -604,16 +550,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/purchases_list/{purchase_id}/delete_purchase:
+  /events/{event_id}/purchases-list/{purchase_id}/delete-purchase:
     delete:
       tags:
-        - Список покупок
+        - Purchase list
+      operationId: deletePurchaseFromPurchasesList
       summary: Удалить позицию покупки
       parameters:
         - in: path
@@ -634,16 +577,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/purchases_list/{purchase_id}/take_purchase:
+  /events/{event_id}/purchases-list/{purchase_id}/take-purchase:
     patch:
       tags:
-        - Список покупок
+        - Purchase list
+      operationId: takePurchaseFromPurchasesList
       summary: Пользователь берет позицию покупки
       parameters:
         - in: path
@@ -668,18 +608,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   # cost alloc list
 
-  /events/{event_id}/cost_allocation_list:
+  /events/{event_id}/cost-allocation-list:
     get:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
+      operationId: getCostAllocationList
       summary: Получить список распределения расходов
       parameters:
         - in: path
@@ -689,7 +626,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список распределения расходов
+          description: Cost allocation list
           content:
             application/json:
               schema:
@@ -701,16 +638,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/cost_allocation_list/{purchase_id}/participants:
+  /events/{event_id}/cost-allocation-list/{purchase_id}/participants:
     get:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
+      operationId: getParticipantsForPurchaseFromCostAllocationList
       summary: Получить список участников для данной покупки
       parameters:
         - in: path
@@ -725,7 +659,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список участников
+          description: Participants list
           content:
             application/json:
               schema:
@@ -737,15 +671,23 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
     delete:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
+      operationId: deleteParticipantsForPurchaseFromCostAllocationList
       summary: Удаление участников для данной покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -764,13 +706,30 @@ paths:
         '400':
           description: Неверный формат данных или некорректные логины
         '404':
-          description: Событие не найдено
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/cost_allocation_list/{purchase_id}/add_participants:
+
+  /events/{event_id}/cost-allocation-list/{purchase_id}/add-participants:
     post:
       tags:
-        - Список распределения расходов
-      summary: Добавить выбранных участников
+        - Cost allocation list
+      operationId: addParticipantsForPurchaseFromCostAllocationList
+      summary: Добавить выбранных участников для покупки
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -789,26 +748,42 @@ paths:
         '400':
           description: Неверный формат данных или некорректные логины
         '404':
-          description: Событие не найдено
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event-id}/cost-allocation-list/send-cost-allocation-list:
+  /events/{event_id}/cost-allocation-list/send-cost-allocation-list:
     post:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
+      operationId: sendCostAllocationList
       summary: Отправить расчет
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
       description: Бэк меняет статус cost_allocated на true (окончательное распределение расходов)
       responses:
         '200':
           description: Сохранили окончательный расчет
         '404':
-          description: Событие не найдено
+          description: Мероприятие с данным идентификатором не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   # stuffs list
 
-  /events/{event_id}/stuffs_list:
+  /events/{event_id}/stuffs-list:
     get:
       tags:
-        - Список вещей
+        - Stuff list
+      operationId: getStuffsList
       summary: Получить список вещей
       parameters:
         - in: path
@@ -818,7 +793,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список вещей
+          description: Stuff list
           content:
             application/json:
               schema:
@@ -830,16 +805,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/stuffs_list/add_stuff:
+  /events/{event_id}/stuffs-list/add-stuff:
     post:
       tags:
-        - Список вещей
+        - Stuff list
+      operationId: addStuffToStuffsList
       summary: Добавить новую позицию вещь
       parameters:
         - in: path
@@ -865,16 +837,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/stuffs_list/{stuff_id}/edit_stuff:
+  /events/{event_id}/stuffs-list/{stuff_id}/edit-stuff:
     patch:
       tags:
-        - Список вещей
+        - Stuff list
+      operationId: editStuffInStuffsList
       summary: Изменить позицию вещи
       parameters:
         - in: path
@@ -905,16 +874,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/stuffs_list/{stuff_id}/delete_stuff:
+  /events/{event_id}/stuffs-list/{stuff_id}/delete-stuff:
     delete:
       tags:
-        - Список вещей
+        - Stuff list
+      operationId: deleteStuffFromStuffsList
       summary: Удалить позицию вещи
       parameters:
         - in: path
@@ -935,16 +901,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/stuffs_list/{stuff_id}/take_stuff:
+  /events/{event_id}/stuffs-list/{stuff_id}/take-stuff:
     patch:
       tags:
-        - Список вещей
+        - Stuff list
+      operationId: takeStuffFromStuffsList
       summary: Пользователь берет позицию вещи
       parameters:
         - in: path
@@ -969,19 +932,16 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
   # task list
 
-  /events/{event_id}/tasks_list:
+  /events/{event_id}/tasks-list:
     get:
       tags:
-        - Список задач
+        - Task list
+      operationId: getTasksList
       summary: Получить список задач
       parameters:
         - in: path
@@ -991,7 +951,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список задач
+          description: Task list
           content:
             application/json:
               schema:
@@ -1003,16 +963,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/tasks_list/add_tasks:
+  /events/{event_id}/tasks-list/add-tasks:
     post:
       tags:
-        - Список задач
+        - Task list
+      operationId: addTaskToTasksList
       summary: Добавить новую задачу
       parameters:
         - in: path
@@ -1038,16 +995,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/tasks_list/{task_id}/edit_task:
+  /events/{event_id}/tasks-list/{task_id}/edit-task:
     patch:
       tags:
-        - Список задач
+        - Task list
+      operationId: editTaskInTasksList
       summary: Изменить задачу
       parameters:
         - in: path
@@ -1078,16 +1032,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/tasks_list/{task_id}/delete_task:
+  /events/{event_id}/tasks-list/{task_id}/delete-task:
     delete:
       tags:
-        - Список задач
+        - Task list
+      operationId: deleteTaskFromTasksList
       summary: Удалить задачу
       parameters:
         - in: path
@@ -1108,16 +1059,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/tasks_list/{task_id}/take_task:
+  /events/{event_id}/tasks-list/{task_id}/take-task:
     patch:
       tags:
-        - Список задач
+        - Task list
+      operationId: takeTaskFromTasksList
       summary: Пользователь берет задачу
       parameters:
         - in: path
@@ -1142,17 +1090,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   # cost list
-  /events/{event_id}/cost_list:
+  /events/{event_id}/cost-list:
     get:
       tags:
-        - Список расходов
+        - Cost list
+      operationId: getCostList
       summary: Получить список расходов
       parameters:
         - in: path
@@ -1162,7 +1107,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список расходов
+          description: Cost list
           content:
             application/json:
               schema:
@@ -1173,22 +1118,19 @@ paths:
                     items:
                       $ref: '#/components/schemas/CostAllocationListItem'
                   expenses-existence: #смотрим по таблице покупок с таким event_id
-                    type: bool
+                    type: boolean
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/cost_list/{purchase_id}/participants:
+  /events/{event_id}/cost-list/{purchase_id}/participants:
     get:
       tags:
-        - Список расходов
+        - Cost list
+      operationId: getParticipantsForPurchaseFromCostList
       summary: Получить список участников для данной покупки
       parameters:
         - in: path
@@ -1203,7 +1145,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список участников
+          description: Participants list
           content:
             application/json:
               schema:
@@ -1215,22 +1157,24 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/get-receipt:
+  /events/{event_id}/purchases-list/{purchase_id}/get-receipt:
     get:
       tags:
-        - Список расходов
-        - Список распределения расходов
-        - Мои покупки
-      summary: Получить чек покупки по receipt_id
+        - Cost list
+        - Cost allocation list
+        - My purchases
+      operationId: getReceiptsForPurchase
+      summary: Получить чек покупки
       parameters:
         - in: path
           name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: purchase_id
           required: true
           schema:
             type: integer
@@ -1238,23 +1182,22 @@ paths:
         '200':
           description: Фото чека покупки
           content:
-          #####Тут должен определенный формат картинки возвращаться, в зависимости от того, как хранить будем
+            multipart/form-data:
+              schema:
+                $ref: '#/components/schemas/ReceiptList'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
-  /events/{event_id}/cost_list_personal:
+  /events/{event_id}/cost-list-personal:
     get:
       tags:
-        - Список расходов
+        - Cost list
+      operationId: getPersonalCostList
       summary: Получить список расходов по текущему пользователю
       parameters:
         - in: path
@@ -1264,7 +1207,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список расходов
+          description: Cost list
           content:
             application/json:
               schema:
@@ -1276,22 +1219,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
   # my purchases list
-  /events/my_purchases_list:
+  /events/my-purchases-list:
     get:
       tags:
-        - Мои покупки
+        - My purchases
+      operationId: getMyPurchasesList
       summary: Получить список мои покупки
       responses:
         '200':
-          description: Мои покупки
+          description: My purchases
           content:
             application/json:
               schema:
@@ -1303,16 +1243,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/my_purchases_list/{purchase_id}/deny_purchase:
+  /events/{event_id}/my-purchases-list/{purchase_id}/deny-purchase:
     delete:
       tags:
-        - Мои покупки
+        - My purchases
+      operationId: denyPurchaseInMyPurchasesList
       summary: Отказаться от покупки
       parameters:
         - in: path
@@ -1333,17 +1270,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
-  /events/{event_id}/my_purchases_list/{purchase_id}/edit_purchase_cost:
+  /events/{event_id}/my-purchases-list/{purchase_id}/edit-purchase-cost:
     patch:
       tags:
-        - Мои покупки
+        - My purchases
+      operationId: editPurchaseCostInMyPurchasesList
       summary: Изменить стоимость покупки
       parameters:
         - in: path
@@ -1358,14 +1292,15 @@ paths:
             type: integer
       requestBody:
         required: true
-        application/json:
-          schema:
-            type: object
-            properties:
-              cost:
-                type: number
-                format: float
-                example: 123.99
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cost:
+                  type: number
+                  format: float
+                  example: 123.99
       responses:
         '200':
           description: Стоимость покупки успешно изменена
@@ -1374,16 +1309,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/my_purchases_list/{purchase_id}/add_receipt:
+  /events/{event_id}/my-purchases-list/{purchase_id}/add-receipt:
     post:
       tags:
-        - Мои покупки
+        - My purchases
+      operationId: addReceiptForPurchaseInMyPurchasesList
       summary: Прикрепить чек к позициям покупок
       parameters:
         - in: path
@@ -1399,7 +1331,9 @@ paths:
       requestBody:
         required: true
         content:
-          ###ФОТО: тут список из фото какого-то формата: фото_чека_1, фото_чека_2
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReceiptList'
       responses:
         '201':
           description: Чек успешно прикреплен к покупке
@@ -1408,23 +1342,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
 
   # my tasks list
-  /events/my_tasks_list:
+  /events/my-tasks-list:
     get:
       tags:
-        - Мои задачи
+        - My tasks
+      operationId: getMyTasksList
       summary: Получить список мои задачи
       responses:
         '200':
-          description: Мои задачи
+          description: My tasks
           content:
             application/json:
               schema:
@@ -1436,16 +1367,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
   
-  /events/{event_id}/my_tasks_list/{task_id}/deny_task:
+  /events/{event_id}/my-tasks-list/{task_id}/deny-task:
     delete:
       tags:
-        - Мои задачи
+        - My tasks
+      operationId: denyTaskInMyTasksList
       summary: Отказаться от задачи
       parameters:
         - in: path
@@ -1466,18 +1394,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
                     
 
 
-  /events/{event_id}/my_tasks_list/{task_id}/mark_task_completed:
+  /events/{event_id}/my-tasks-list/{task_id}/mark-task-completed:
     patch:
       tags:
-        - Мои задачи
+        - My tasks
+      operationId: markTaskCompletedInMyTasksList
       summary: Пользователь отмечает задачу выполненной
       parameters:
         - in: path
@@ -1498,22 +1423,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   
   # my stuffs list
-  /events/my_stuffs_list:
+  /events/my-stuffs-list:
     get:
       tags:
-        - Мои вещи
+        - My stuffs
+      operationId: getMyStuffsList
       summary: Получить список моих вещей
       responses:
         '200':
-          description: Мои вещи
+          description: My stuffs
           content:
             application/json:
               schema:
@@ -1525,17 +1447,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
-  /events/{event_id}/my_stuffs_list/{stuff_id}/deny_stuff:
+  /events/{event_id}/my-stuffs-list/{stuff_id}/deny-stuff:
     delete:
       tags:
-        - Мои вещи
+        - My stuffs
+      operationId: denyStuffInMyStuffsList
       summary: Отказаться от вещи
       parameters:
         - in: path
@@ -1556,21 +1475,18 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
   # my debts
-  /events/my_debts_list:
+  /events/my-debts-list:
     get:
       tags:
-        - Мои долги
+        - My debts
+      operationId: getMyDebtsList
       summary: Получить список моих долгов
       responses:
         '200':
-          description: Мои долги
+          description: My debts
           content:
             application/json:
               schema:
@@ -1582,16 +1498,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/my_debts_list/{debt_id}/mark_debt_paid:
+  /events/{event_id}/my-debts-list/{debt_id}/mark-debt-paid:
     patch:
       tags:
-        - Мои долги
+        - My debts
+      operationId: markDebtPaidInMyDebtsList
       summary: Пользователь отмечает долг оплаченным
       parameters:
         - in: path
@@ -1612,22 +1525,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
 
   # my incomes
-  /events/my_incomes_list:
+  /events/my-incomes-list:
     get:
       tags:
-        - Мне должны
+        - My incomes
+      operationId: getMyIncomesList
       summary: Получить список мне должны
       responses:
         '200':
-          description: Мне должны
+          description: My incomes
           content:
             application/json:
               schema:
@@ -1639,16 +1549,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
 
-  /events/{event_id}/my_incomes_list/{debt_id}/mark_income_received:
+  /events/{event_id}/my-incomes-list/{debt_id}/mark-income-received:
     patch:
       tags:
-        - Мне должны
+        - My incomes
+      operationId: markIncomeReceivedInMyIncomesList
       summary: Пользователь отмечает долг полученным
       parameters:
         - in: path
@@ -1669,11 +1576,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    default: "Мероприятие не найдено"
+                $ref: '#/components/schemas/EventNotExistResponse'
   
 components:
   securitySchemes:
@@ -1683,6 +1586,74 @@ components:
       bearerFormat: JWT
 
   schemas:
+
+    ReceiptList:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Массив фото чеков
+
+    AddParticipantsRequest:
+      type: array
+      items:
+        type: string
+        minLength: 3
+        maxLength: 20
+        example: main_player
+
+    SuccessEventJoining:
+      type: string
+      example: "Заявка успешно отправлена"
+
+    EventSecondJoining:
+      type: object
+      properties:
+        error:
+          type: string
+          default: "Вы уже присоединены к данному мероприятию"
+
+    EventNotExistResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Подробное описание ошибки
+
+    UserLogin:
+      type: object
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+      required:
+        - login
+        - password
+
+    AuthSuccessResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT токен пользователя
+
+    UserAlreadyExistResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: 1) Пользователь с таким логином уже существует. 2) Пользователь с такой почтой уже существует.
+
+    AuthUnsuccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Неверный логин или пароль
 
     # Мероприятие
     Event:
@@ -1732,6 +1703,42 @@ components:
         role_name:
           type: string
           example: "участник"
+    
+    EventPreview:
+      type: object
+      required:
+        - event_id
+        - event_name
+        - event_date
+        - event_status_name
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        event_status_name:
+          type: string
+          example: активно
+        location:
+          type: string
+          maxLength: 100
+          example: Центральный парк
+          default: "место не указано"
+        event_date:
+          type: string
+          format: date
+          example: "2025-06-12"
+          description: Дата в формате YYYY-MM-DD
+        event_time:
+          type: string
+          format: time
+          example: "16:00"
+          x-format: HH:MM  #кастомное расширение
+          default: "время не указано"
+
 
     # Редактирование мероприятия
     EventEditor:
@@ -1770,12 +1777,19 @@ components:
           default: "не прикреплена"
 
    # Пользователь
+    EventUserMetadata:
+      type: object
+      properties:
+        role_name:
+          type: string
+          example: "участник"
+        event_status_name:
+          type: string
+          example: "активно"
+
     User:
       type: object
       properties:
-#        user_id:
-#          type: integer
-#          example: 1123
         login:
           type: string
           minLength: 3
@@ -1873,29 +1887,31 @@ components:
       type: object
       properties:
         login:
-          required: true
           type: string
           minLength: 3
           maxLength: 20
           example: main_player
         email:
-          required: true
           type: string
           minLength: 1
           maxLength: 254
           example: poposh01@mail.ru
         name:
-          required: true
           type: string
           minLength: 1
           maxLength: 20
           example: Алина
         surname:
-          required: true
           type: string
           minLength: 1
           maxLength: 50
           example: Смирнов
+      required:
+        - login
+        - email
+        - name
+        - surname
+
 
     # Задача
     TaskListItem:
@@ -2246,34 +2262,6 @@ components:
         - stuff_name
         - responsible_user
 
-    # Долг - не используется
-    Debt:
-      type: object
-      required:
-        - debt_id
-        - event_id
-        - payer_id
-        - recipient_id
-        - status_id
-        - debt_amount
-      properties:
-        debt_id:
-          type: integer
-        payer_id:
-          type: integer
-        recipient_id:
-          type: integer
-        status_id:
-          type: integer
-        debt_amount:
-          type: number
-          format: float
-          minimum: 0
-          example: 123.50
-        event_id:
-          type: integer
-
-
     # Позиции в моих списках
     MyPurchaseListItem:
       type: object
@@ -2344,13 +2332,13 @@ components:
         task_status_name:
           type: string
           default: не выполнена
-        required:
-          - task_id
-          - task_name
-          - event_id
-          - event_name
-          - deadline_date
-          - task_status_name
+      required:
+        - task_id
+        - task_name
+        - event_id
+        - event_name
+        - deadline_date
+        - task_status_name
     
     MyStuffListItem:
       event_id:
