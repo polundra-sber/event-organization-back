@@ -18,7 +18,7 @@ public class AuthService {
     private final ReactiveUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    public Mono<String> register(UserProfileRegistrationRequest request) {
+    public Mono<String> register(User request) {
         return userService.registerUser(request)
                 .then(Mono.defer(() -> generateTokenForUser(request.login())));
     }
