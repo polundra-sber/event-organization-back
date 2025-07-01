@@ -674,6 +674,7 @@ paths:
     delete:
       tags:
         - Cost allocation list
+      operationId: deleteParticipantsForPurchaseFromCostAllocationList
       summary: Удаление участников для данной покупки
       parameters:
         - in: path

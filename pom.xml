@@ -39,6 +39,8 @@
                                 <useSpringBoot>true</useSpringBoot>
                                 <useJakartaEe>true</useJakartaEe>
                                 <useTags>true</useTags>
+                                <dateLibrary>java8</dateLibrary>
+                                <unhandledException>true</unhandledException>
                             </configOptions>
                             <globalProperties>
                                 <skipFormModel>false</skipFormModel>
