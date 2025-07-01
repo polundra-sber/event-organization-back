@@ -11,24 +11,24 @@ security:
 
 # Добавленные теги
 tags:
-  - name: Аутентификация
+  - name: Authentication
     description: Регистрация, авторизация и управление аккаунтом
-  - name: Профиль
+  - name: Profile
     description: Управление профилем пользователя
-  - name: Главная страница
+  - name: Home page
     description: Список мероприятий
-  - name: Список участников
-  - name: Список покупок
-  - name: Список задач
-  - name: Список вещей
-  - name: Список распределения расходов
-  - name: Список расходов
-  - name: Мои долги
-  - name: Мне должны
-  - name: Мои покупки
-  - name: Мои задачи
-  - name: Мои вещи
-  - name: Пользователь в мероприятии
+  - name: Participants list
+  - name: Purchase list
+  - name: Task list
+  - name: Stuff list
+  - name: Cost allocation list
+  - name: Cost list
+  - name: My debts
+  - name: My incomes
+  - name: My purchases
+  - name: My tasks
+  - name: My stuffs
+  - name: User metadata
     description: Получение роли пользователя и статуса мероприятия
 
 
@@ -36,7 +36,7 @@ paths:
   /events/{event_id}/user-metadata:
     get:
       tags:
-       - Пользователь в мероприятии
+       - User metadata
       summary: Получить роль пользователя в данном мероприятии и статус мероприятия
       parameters:
         - in: path
@@ -62,7 +62,7 @@ paths:
   /auth/register:
     post:
       tags:
-        - Аутентификация
+        - Authentication
       security: []  # отключает аутентификацию для этого endpoint'а
       summary: Регистрация пользователя
       requestBody:
@@ -88,7 +88,7 @@ paths:
   /auth/login:
     post:
       tags:
-       - Аутентификация
+       - Authentication
       summary: Авторизация пользователя
       requestBody:
         required: true
@@ -115,7 +115,7 @@ paths:
   /events:
     get:
       tags:
-        - Главная страница
+        - Home page
       summary: Получить список мероприятий
       description: Возвращает список всех мероприятий пользователя
       responses:
@@ -131,7 +131,7 @@ paths:
   /create-event:
     post:
       tags:
-        - Главная страница
+        - Home page
       summary: Создать новое мероприятие
       requestBody:
         required: true
@@ -150,7 +150,7 @@ paths:
   /find-event/{event_id}:
     get:
       tags:
-        - Главная страница
+        - Home page
       summary: Поиск мероприятия по идентификатору
       parameters:
         - in: path
@@ -175,7 +175,7 @@ paths:
   /join-event-request/{event_id}:
     post:
       tags:
-        - Главная страница
+        - Home page
       summary: Отправка заявки для присоединения к мероприятию
       parameters:
         - in: path
@@ -208,7 +208,7 @@ paths:
   /profile:
     get:
       tags:
-        - Профиль
+        - Profile
       summary: Вход в личный профиль
       responses:
         '200':
@@ -219,7 +219,7 @@ paths:
                 $ref: '#/components/schemas/UserProfile'
     patch:
       tags:
-        - Профиль
+        - Profile
       summary: Редактирование профиля
       requestBody:
         required: true
@@ -246,7 +246,7 @@ paths:
   /leave-event/{event_id}:
     delete:
       tags:
-        - Главная страница
+        - Home page
       summary: Участник или организатор покидает мероприятие
       parameters:
         - in: path
@@ -269,7 +269,7 @@ paths:
   /delete-event/{event_id}:
     delete:
       tags:
-        - Главная страница
+        - Home page
       summary: Создатель удаляет мероприятие
       parameters:
         - in: path
@@ -286,7 +286,7 @@ paths:
   /complete-event/{event_id}:
     patch:
       tags:
-        - Главная страница
+        - Home page
       summary: Создатель завершает мероприятие
       parameters:
         - in: path
@@ -303,7 +303,7 @@ paths:
   /events/{event_id}:
     get:
       tags:
-        - Главная страница
+        - Home page
       summary: Зайти в карточку мероприятия
       parameters:
         - in: path
@@ -329,7 +329,7 @@ paths:
   /events/{event_id}/edit:
     patch:
       tags:
-        - Главная страница
+        - Home page
       summary: Создатель редактирует мероприятие
       parameters:
         - in: path
@@ -355,7 +355,7 @@ paths:
   /events/{event_id}/participants-list:
     get:
       tags:
-        - Список участников
+        - Participants list
       summary: Получить список участников мероприятия
       parameters:
         - in: path
@@ -366,7 +366,7 @@ paths:
       description: Возвращает список всех участников мероприятия
       responses:
         '200':
-          description: Список участников
+          description: Participants list
           content:
             application/json:
               schema:
@@ -379,7 +379,7 @@ paths:
   /events/{event_id}/participants-list/add-participant:
     get:
       tags:
-        - Список участников
+        - Participants list
       summary: Найти первых 10 пользователей для добавления
       parameters:
         - in: path
@@ -414,7 +414,7 @@ paths:
           description: Пользователь не найден
     post:
       tags:
-        - Список участников
+        - Participants list
       summary: Добавить выбранных участников
       parameters:
         - in: path
@@ -440,7 +440,7 @@ paths:
   /events/{event_id}/purchases-list:
     get:
       tags:
-        - Список покупок
+        - Purchase list
       summary: Получить список покупок
       parameters:
         - in: path
@@ -450,7 +450,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список покупок
+          description: Purchase list
           content:
             application/json:
               schema:
@@ -467,7 +467,7 @@ paths:
   /events/{event_id}/purchases-list/add-purchase:
     post:
       tags:
-        - Список покупок
+        - Purchase list
       summary: Добавить новую позицию покупки
       parameters:
         - in: path
@@ -498,7 +498,7 @@ paths:
   /events/{event_id}/purchases-list/{purchase_id}/edit-purchase:
     patch:
       tags:
-        - Список покупок
+        - Purchase list
       summary: Изменить позицию покупки
       parameters:
         - in: path
@@ -534,7 +534,7 @@ paths:
   /events/{event_id}/purchases-list/{purchase_id}/delete-purchase:
     delete:
       tags:
-        - Список покупок
+        - Purchase list
       summary: Удалить позицию покупки
       parameters:
         - in: path
@@ -560,7 +560,7 @@ paths:
   /events/{event_id}/purchases-list/{purchase_id}/take-purchase:
     patch:
       tags:
-        - Список покупок
+        - Purchase list
       summary: Пользователь берет позицию покупки
       parameters:
         - in: path
@@ -592,7 +592,7 @@ paths:
   /events/{event_id}/cost-allocation-list:
     get:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
       summary: Получить список распределения расходов
       parameters:
         - in: path
@@ -602,7 +602,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список распределения расходов
+          description: Cost allocation list
           content:
             application/json:
               schema:
@@ -619,7 +619,7 @@ paths:
   /events/{event_id}/cost-allocation-list/{purchase_id}/participants:
     get:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
       summary: Получить список участников для данной покупки
       parameters:
         - in: path
@@ -634,7 +634,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список участников
+          description: Participants list
           content:
             application/json:
               schema:
@@ -649,7 +649,7 @@ paths:
                 $ref: '#/components/schemas/EventNotExistResponse'
     delete:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
       summary: Удаление участников для данной покупки
       parameters:
         - in: path
@@ -690,7 +690,7 @@ paths:
   /events/{event_id}/cost-allocation-list/{purchase_id}/add-participants:
     post:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
       summary: Добавить выбранных участников
       parameters:
         - in: path
@@ -730,7 +730,7 @@ paths:
   /events/{event_id}/cost-allocation-list/send-cost-allocation-list:
     post:
       tags:
-        - Список распределения расходов
+        - Cost allocation list
       summary: Отправить расчет
       parameters:
         - in: path
@@ -754,7 +754,7 @@ paths:
   /events/{event_id}/stuffs-list:
     get:
       tags:
-        - Список вещей
+        - Stuff list
       summary: Получить список вещей
       parameters:
         - in: path
@@ -764,7 +764,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список вещей
+          description: Stuff list
           content:
             application/json:
               schema:
@@ -781,7 +781,7 @@ paths:
   /events/{event_id}/stuffs-list/add-stuff:
     post:
       tags:
-        - Список вещей
+        - Stuff list
       summary: Добавить новую позицию вещь
       parameters:
         - in: path
@@ -812,7 +812,7 @@ paths:
   /events/{event_id}/stuffs-list/{stuff_id}/edit-stuff:
     patch:
       tags:
-        - Список вещей
+        - Stuff list
       summary: Изменить позицию вещи
       parameters:
         - in: path
@@ -848,7 +848,7 @@ paths:
   /events/{event_id}/stuffs-list/{stuff_id}/delete-stuff:
     delete:
       tags:
-        - Список вещей
+        - Stuff list
       summary: Удалить позицию вещи
       parameters:
         - in: path
@@ -874,7 +874,7 @@ paths:
   /events/{event_id}/stuffs-list/{stuff_id}/take-stuff:
     patch:
       tags:
-        - Список вещей
+        - Stuff list
       summary: Пользователь берет позицию вещи
       parameters:
         - in: path
@@ -907,7 +907,7 @@ paths:
   /events/{event_id}/tasks-list:
     get:
       tags:
-        - Список задач
+        - Task list
       summary: Получить список задач
       parameters:
         - in: path
@@ -917,7 +917,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список задач
+          description: Task list
           content:
             application/json:
               schema:
@@ -934,7 +934,7 @@ paths:
   /events/{event_id}/tasks-list/add-tasks:
     post:
       tags:
-        - Список задач
+        - Task list
       summary: Добавить новую задачу
       parameters:
         - in: path
@@ -965,7 +965,7 @@ paths:
   /events/{event_id}/tasks-list/{task_id}/edit-task:
     patch:
       tags:
-        - Список задач
+        - Task list
       summary: Изменить задачу
       parameters:
         - in: path
@@ -1001,7 +1001,7 @@ paths:
   /events/{event_id}/tasks-list/{task_id}/delete-task:
     delete:
       tags:
-        - Список задач
+        - Task list
       summary: Удалить задачу
       parameters:
         - in: path
@@ -1027,7 +1027,7 @@ paths:
   /events/{event_id}/tasks-list/{task_id}/take-task:
     patch:
       tags:
-        - Список задач
+        - Task list
       summary: Пользователь берет задачу
       parameters:
         - in: path
@@ -1058,7 +1058,7 @@ paths:
   /events/{event_id}/cost-list:
     get:
       tags:
-        - Список расходов
+        - Cost list
       summary: Получить список расходов
       parameters:
         - in: path
@@ -1068,7 +1068,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список расходов
+          description: Cost list
           content:
             application/json:
               schema:
@@ -1090,7 +1090,7 @@ paths:
   /events/{event_id}/cost-list/{purchase_id}/participants:
     get:
       tags:
-        - Список расходов
+        - Cost list
       summary: Получить список участников для данной покупки
       parameters:
         - in: path
@@ -1105,7 +1105,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список участников
+          description: Participants list
           content:
             application/json:
               schema:
@@ -1122,9 +1122,9 @@ paths:
   /events/{event_id}/get-receipt:
     get:
       tags:
-        - Список расходов
-        - Список распределения расходов
-        - Мои покупки
+        - Cost list
+        - Cost allocation list
+        - My purchases
       summary: Получить чек покупки по receipt_id
       parameters:
         - in: path
@@ -1150,7 +1150,7 @@ paths:
   /events/{event_id}/cost-list-personal:
     get:
       tags:
-        - Список расходов
+        - Cost list
       summary: Получить список расходов по текущему пользователю
       parameters:
         - in: path
@@ -1160,7 +1160,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Список расходов
+          description: Cost list
           content:
             application/json:
               schema:
@@ -1179,11 +1179,11 @@ paths:
   /events/my-purchases-list:
     get:
       tags:
-        - Мои покупки
+        - My purchases
       summary: Получить список мои покупки
       responses:
         '200':
-          description: Мои покупки
+          description: My purchases
           content:
             application/json:
               schema:
@@ -1200,7 +1200,7 @@ paths:
   /events/{event_id}/my-purchases-list/{purchase_id}/deny-purchase:
     delete:
       tags:
-        - Мои покупки
+        - My purchases
       summary: Отказаться от покупки
       parameters:
         - in: path
@@ -1227,7 +1227,7 @@ paths:
   /events/{event_id}/my-purchases-list/{purchase_id}/edit-purchase-cost:
     patch:
       tags:
-        - Мои покупки
+        - My purchases
       summary: Изменить стоимость покупки
       parameters:
         - in: path
@@ -1264,7 +1264,7 @@ paths:
   /events/{event_id}/my-purchases-list/{purchase_id}/add-receipt:
     post:
       tags:
-        - Мои покупки
+        - My purchases
       summary: Прикрепить чек к позициям покупок
       parameters:
         - in: path
@@ -1299,11 +1299,11 @@ paths:
   /events/my-tasks-list:
     get:
       tags:
-        - Мои задачи
+        - My tasks
       summary: Получить список мои задачи
       responses:
         '200':
-          description: Мои задачи
+          description: My tasks
           content:
             application/json:
               schema:
@@ -1320,7 +1320,7 @@ paths:
   /events/{event_id}/my-tasks-list/{task_id}/deny-task:
     delete:
       tags:
-        - Мои задачи
+        - My tasks
       summary: Отказаться от задачи
       parameters:
         - in: path
@@ -1348,7 +1348,7 @@ paths:
   /events/{event_id}/my-tasks-list/{task_id}/mark-task-completed:
     patch:
       tags:
-        - Мои задачи
+        - My tasks
       summary: Пользователь отмечает задачу выполненной
       parameters:
         - in: path
@@ -1376,11 +1376,11 @@ paths:
   /events/my-stuffs-list:
     get:
       tags:
-        - Мои вещи
+        - My stuffs
       summary: Получить список моих вещей
       responses:
         '200':
-          description: Мои вещи
+          description: My stuffs
           content:
             application/json:
               schema:
@@ -1398,7 +1398,7 @@ paths:
   /events/{event_id}/my-stuffs-list/{stuff_id}/deny-stuff:
     delete:
       tags:
-        - Мои вещи
+        - My stuffs
       summary: Отказаться от вещи
       parameters:
         - in: path
@@ -1425,11 +1425,11 @@ paths:
   /events/my-debts-list:
     get:
       tags:
-        - Мои долги
+        - My debts
       summary: Получить список моих долгов
       responses:
         '200':
-          description: Мои долги
+          description: My debts
           content:
             application/json:
               schema:
@@ -1446,7 +1446,7 @@ paths:
   /events/{event_id}/my-debts-list/{debt_id}/mark-debt-paid:
     patch:
       tags:
-        - Мои долги
+        - My debts
       summary: Пользователь отмечает долг оплаченным
       parameters:
         - in: path
@@ -1474,11 +1474,11 @@ paths:
   /events/my-incomes-list:
     get:
       tags:
-        - Мне должны
+        - My incomes
       summary: Получить список мне должны
       responses:
         '200':
-          description: Мне должны
+          description: My incomes
           content:
             application/json:
               schema:
@@ -1495,7 +1495,7 @@ paths:
   /events/{event_id}/my-incomes-list/{debt_id}/mark-income-received:
     patch:
       tags:
-        - Мне должны
+        - My incomes
       summary: Пользователь отмечает долг полученным
       parameters:
         - in: path

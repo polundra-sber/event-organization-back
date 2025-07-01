@@ -38,6 +38,7 @@
                                 <reactive>true</reactive>
                                 <useSpringBoot>true</useSpringBoot>
                                 <useJakartaEe>true</useJakartaEe>
+                                <useTags>true</useTags>
                             </configOptions>
                             <globalProperties>
                                 <skipFormModel>false</skipFormModel>
