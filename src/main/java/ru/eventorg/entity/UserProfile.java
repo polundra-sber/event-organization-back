@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("user_profiles")
+@Table("user_profile")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfiles {
+public class UserProfile {
     @Id
     private String login;
     private String name;
