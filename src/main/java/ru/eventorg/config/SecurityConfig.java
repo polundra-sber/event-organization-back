@@ -38,7 +38,7 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth/login", "/auth/register").permitAll()  // Разрешаем доступ без авторизации
+                        .pathMatchers("/auth/login", "/auth/register", "/events/{event_id}/participants-list").permitAll()  // Разрешаем доступ без авторизации
                         .anyExchange().authenticated()           // Все остальные пути требуют авторизации
                 )
                 .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)

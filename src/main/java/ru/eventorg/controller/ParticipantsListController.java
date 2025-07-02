@@ -1,0 +1,47 @@
+package ru.eventorg.controller;
+
+import org.openapitools.api.ParticipantsListApi;
+import org.openapitools.model.User;
+import org.openapitools.model.UserDemo;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.eventorg.service.ParticipantsListService;
+
+@RestController
+public class ParticipantsListController implements ParticipantsListApi {
+
+    private final ParticipantsListService participantsListService;
+
+    public ParticipantsListController(ParticipantsListService participantsListService) {
+        this.participantsListService = participantsListService;
+    }
+    @Override
+    public Mono<ResponseEntity<Void>> addParticipants(Integer eventId, Flux<String> requestBody, ServerWebExchange exchange) throws Exception {
+        return ParticipantsListApi.super.addParticipants(eventId, requestBody, exchange);
+    }
+
+    @Override
+    public Mono<ResponseEntity<Flux<User>>> getEventParticipantsList(Integer eventId, ServerWebExchange exchange) throws Exception {
+        Flux<User> result = participantsListService.getParticipantsById(eventId)
+                .map(fullUser -> {
+                    User dto = new User();
+                    dto.setLogin(fullUser.getLogin());
+                    dto.setEmail(fullUser.getEmail());
+                    dto.setPassword(fullUser.getPassword());
+                    dto.setName(fullUser.getName());
+                    dto.setSurname(fullUser.getSurname());
+                    dto.setCommentMoneyTransfer(fullUser.getCommentMoneyTransfer());
+                    return dto;
+                });
+
+        return Mono.just(ResponseEntity.ok(result));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Flux<UserDemo>>> searchUsers(Integer eventId, String text, Integer seq, ServerWebExchange exchange) throws Exception {
+        return ParticipantsListApi.super.searchUsers(eventId, text, seq, exchange);
+    }
+}

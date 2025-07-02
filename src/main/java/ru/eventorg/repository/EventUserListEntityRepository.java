@@ -6,4 +6,6 @@ import ru.eventorg.entity.EventUserListEntity;
 
 public interface EventUserListEntityRepository extends R2dbcRepository<EventUserListEntity, String> {
     Flux<EventUserListEntity> findEventUserListByUserId(String userId);
+
+    Flux<EventUserListEntity> findByEventId(Integer eventId);
 }
