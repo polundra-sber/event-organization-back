@@ -1,13 +1,13 @@
 package ru.eventorg.service;
 
 import lombok.RequiredArgsConstructor;
+import org.openapitools.model.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.eventorg.dto.UserProfileRegistrationRequest;
-import ru.eventorg.exception.UserExistsException;
-import ru.eventorg.pojos.UserProfiles;
-import ru.eventorg.pojos.UserSecrets;
+import ru.eventorg.entity.UserProfile;
+import ru.eventorg.entity.UserSecret;
+import ru.eventorg.exception.UserAlreadyExistsException;
 import ru.eventorg.repository.UserProfilesRepository;
 import ru.eventorg.repository.UserSecretsRepository;
 
@@ -18,8 +18,8 @@ public class UserService {
     private final UserSecretsRepository secretsRepo;
     private final PasswordEncoder passwordEncoder;
 
-    public Mono<Void> registerUser(UserProfileRegistrationRequest request) {
-        return checkUserExists(request.login(), request.email())
+    public Mono<Void> registerUser(User request) {
+        return checkUserExists(request.getLogin(), request.getEmail())
                 .then(createAndSaveUser(request));
     }
 
@@ -32,26 +32,26 @@ public class UserService {
             boolean emailExists = tuple.getT2();
 
             if (loginExists) {
-                return Mono.error(new UserExistsException("Login already taken"));
+                return Mono.error(new UserAlreadyExistsException("Login already taken"));
             }
             if (emailExists) {
-                return Mono.error(new UserExistsException("Email already registered"));
+                return Mono.error(new UserAlreadyExistsException("Email already registered"));
             }
             return Mono.empty();
         });
     }
 
-    private Mono<Void> createAndSaveUser(UserProfileRegistrationRequest request) {
-        UserSecrets secrets = new UserSecrets();
-        secrets.setLogin(request.login());
-        secrets.setEmail(request.email());
-        secrets.setPassword(passwordEncoder.encode(request.password()));
+    private Mono<Void> createAndSaveUser(User request) {
+        UserSecret secrets = new UserSecret();
+        secrets.setLogin(request.getLogin());
+        secrets.setEmail(request.getEmail());
+        secrets.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        UserProfiles profile = new UserProfiles();
-        profile.setLogin(request.login());
-        profile.setName(request.name());
-        profile.setSurname(request.surname());
-        profile.setCommentMoneyTransfer(request.commentMoneyTransfer());
+        UserProfile profile = new UserProfile();
+        profile.setLogin(request.getLogin());
+        profile.setName(request.getName());
+        profile.setSurname(request.getSurname());
+        profile.setCommentMoneyTransfer(request.getCommentMoneyTransfer());
 
         return profilesRepo.save(profile)
                 .then(secretsRepo.save(secrets))

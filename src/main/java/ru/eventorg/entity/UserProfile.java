@@ -14,10 +14,8 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserProfile {
-    @Id
     private String login;
     private String name;
     private String surname;
     private String commentMoneyTransfer;
-
 }

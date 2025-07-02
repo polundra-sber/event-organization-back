@@ -14,7 +14,6 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserSecret {
-    @Id
     private String login;
     private String email;
     private String password;
