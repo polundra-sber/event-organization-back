@@ -1,7 +1,10 @@
 package ru.eventorg.exception;
 
-public class EventNotExistException extends RuntimeException {
-    public EventNotExistException(String message) {
-        super(message);
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+public class EventNotExistException extends ResponseStatusException {
+    public EventNotExistException() {
+        super(HttpStatus.NOT_FOUND,"Мероприятие с данным идентификатором не найдено");
     }
 }
