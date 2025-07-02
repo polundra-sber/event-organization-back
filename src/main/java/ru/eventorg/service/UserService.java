@@ -6,17 +6,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
-import ru.eventorg.entity.UserProfile;
-import ru.eventorg.entity.UserSecret;
+import ru.eventorg.entity.UserProfileEntity;
+import ru.eventorg.entity.UserSecretEntity;
 import ru.eventorg.exception.UserAlreadyExistsException;
-import ru.eventorg.repository.UserProfilesRepository;
-import ru.eventorg.repository.UserSecretsRepository;
+import ru.eventorg.repository.UserProfilesEntityRepository;
+import ru.eventorg.repository.UserSecretsEntityRepository;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserProfilesRepository profilesRepo;
-    private final UserSecretsRepository secretsRepo;
+    private final UserProfilesEntityRepository profilesRepo;
+    private final UserSecretsEntityRepository secretsRepo;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -44,12 +44,12 @@ public class UserService {
     }
 
     private Mono<Void> createAndSaveUser(User request) {
-        UserSecret secrets = new UserSecret();
+        UserSecretEntity secrets = new UserSecretEntity();
         secrets.setLogin(request.getLogin());
         secrets.setEmail(request.getEmail());
         secrets.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        UserProfile profile = new UserProfile();
+        UserProfileEntity profile = new UserProfileEntity();
         profile.setLogin(request.getLogin());
         profile.setName(request.getName());
         profile.setSurname(request.getSurname());

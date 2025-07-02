@@ -1,5 +1,6 @@
 package ru.eventorg.entity;
 
+import java.math.BigDecimal;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -9,14 +10,16 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("receipt_list")
+@Table("debt")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReceiptList {
+public class DebtEntity {
     @Id
-    private Integer receiptListId;
-    private Integer purchaseId;
-    private Integer receiptId;
-
+    private Integer debtId;
+    private String payerId;
+    private String recipientId;
+    private Integer statusId;
+    private BigDecimal debtAmount;
+    private Integer eventId;
 }

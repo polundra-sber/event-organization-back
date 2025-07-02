@@ -16,7 +16,7 @@ import lombok.AllArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Event {
+public class EventEntity {
     @Id
     private Integer eventId;
     private String eventName;
