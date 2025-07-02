@@ -1,13 +1,13 @@
 package ru.eventorg.service;
 
 import lombok.RequiredArgsConstructor;
+import org.openapitools.model.User;
+import org.openapitools.model.UserLogin;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.eventorg.dto.UserProfileAuthRequest;
-import ru.eventorg.dto.UserProfileRegistrationRequest;
 import ru.eventorg.security.JwtTokenUtil;
 
 @Service
@@ -18,14 +18,14 @@ public class AuthService {
     private final ReactiveUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    public Mono<String> register(UserProfileRegistrationRequest request) {
+    public Mono<String> register(User request) {
         return userService.registerUser(request)
-                .then(Mono.defer(() -> generateTokenForUser(request.login())));
+                .then(Mono.defer(() -> generateTokenForUser(request.getLogin())));
     }
 
-    public Mono<String> login(UserProfileAuthRequest request) {
-        return userDetailsService.findByUsername(request.login())
-                .filter(user -> passwordEncoder.matches(request.password(), user.getPassword()))
+    public Mono<String> login(UserLogin request) {
+        return userDetailsService.findByUsername(request.getLogin())
+                .filter(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()))
                 .switchIfEmpty(Mono.error(new BadCredentialsException("Invalid credentials")))
                 .flatMap(user -> generateTokenForUser(user.getUsername()));
     }
