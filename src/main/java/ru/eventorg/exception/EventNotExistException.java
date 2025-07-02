@@ -1,10 +1,22 @@
 package ru.eventorg.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-public class EventNotExistException extends ResponseStatusException {
+@Getter
+public class EventNotExistException extends RuntimeException {
+
+    private final HttpStatus statusCode;
+    private final String message;
+
     public EventNotExistException() {
-        super(HttpStatus.NOT_FOUND,"Мероприятие с данным идентификатором не найдено");
+        this.statusCode = HttpStatus.NOT_FOUND;
+        this.message = "Мероприятие с данным идентификатором не найдено";
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
     }
 }
