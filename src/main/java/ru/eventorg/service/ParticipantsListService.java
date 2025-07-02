@@ -46,7 +46,7 @@ public class ParticipantsListService {
                 ))
                 .all()
                 .switchIfEmpty(Mono.error(
-                        new EventNotExistException("Мероприятие с id " + eventId + " не найдено или у него нет участников")
+                        new EventNotExistException()
                 ));
     }
 }
