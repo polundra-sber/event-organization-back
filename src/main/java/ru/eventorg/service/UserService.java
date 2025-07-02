@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.openapitools.model.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 import ru.eventorg.entity.UserProfile;
 import ru.eventorg.entity.UserSecret;
@@ -18,6 +19,7 @@ public class UserService {
     private final UserSecretsRepository secretsRepo;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public Mono<Void> registerUser(User request) {
         return checkUserExists(request.getLogin(), request.getEmail())
                 .then(createAndSaveUser(request));
