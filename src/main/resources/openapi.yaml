@@ -156,14 +156,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Event'
+              $ref: '#/components/schemas/EventEditor'
       responses:
         '201':
           description: Мероприятие успешно создано
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventEditor'
+                $ref: '#/components/schemas/Event'
 
   /find_event/{event_id}:
     get:
