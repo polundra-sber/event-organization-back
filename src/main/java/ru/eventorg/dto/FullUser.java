@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class FullUser {
     private String login;
+    private Integer roleId;
     private String email;
     private String password;
     private String name;

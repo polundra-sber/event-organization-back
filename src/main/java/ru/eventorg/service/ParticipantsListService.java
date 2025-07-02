@@ -23,6 +23,7 @@ public class ParticipantsListService {
         String sql = """
             SELECT
                 eul.user_id AS login,
+                eul.role_id AS role,
                 us.email       AS email,
                 us.password    AS password,
                 up.name        AS name,
@@ -38,6 +39,7 @@ public class ParticipantsListService {
                 .bind(0, eventId)
                 .map((row, metadata) -> new FullUser(
                         row.get("login", String.class),
+                        row.get("role", Integer.class),
                         row.get("email", String.class),
                         row.get("password", String.class),
                         row.get("name", String.class),
