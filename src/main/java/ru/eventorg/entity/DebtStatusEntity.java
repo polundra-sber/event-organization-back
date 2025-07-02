@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("task_status")
+@Table("debt_status")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskStatus {
-    @Id
-    private Integer taskStatusId;
-    private String taskStatusName;
+public class DebtStatusEntity {
 
+    @Id
+    private Integer debtStatusId;
+    private String debtStatusName;
 }

@@ -9,13 +9,14 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("receipt")
+@Table("role")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Receipt {
+public class RoleEntity {
+
     @Id
-    private Integer receiptId;
-    private String filePath;
+    private Integer roleId;
+    private String roleName;
 
 }

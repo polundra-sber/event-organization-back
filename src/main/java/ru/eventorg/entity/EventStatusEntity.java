@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("payer")
+@Table("event_status")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Payer {
+public class EventStatusEntity {
     @Id
-    private Integer payerId;
-    private Integer purchaseId;
-    private String userId;
+    private Integer eventStatusId;
+    private String eventStatusName;
+
 }

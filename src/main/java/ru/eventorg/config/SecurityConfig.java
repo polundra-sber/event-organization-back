@@ -17,7 +17,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import reactor.core.publisher.Mono;
-import ru.eventorg.repository.UserSecretsRepository;
+import ru.eventorg.repository.UserSecretsEntityRepository;
 import ru.eventorg.security.JwtTokenUtil;
 
 @Configuration
@@ -60,7 +60,7 @@ public class SecurityConfig {
 
     @Bean
     @Primary
-    public ReactiveUserDetailsService userDetailsService(UserSecretsRepository secretsRepo) {
+    public ReactiveUserDetailsService userDetailsService(UserSecretsEntityRepository secretsRepo) {
         return username -> secretsRepo.findByLogin(username)
                 .map(secret -> User.withUsername(secret.getLogin())
                         .password(secret.getPassword())

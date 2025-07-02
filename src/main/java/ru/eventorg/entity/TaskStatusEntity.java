@@ -1,9 +1,6 @@
 package ru.eventorg.entity;
 
 
-import java.math.BigDecimal;
-
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -12,17 +9,13 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("purchase")
+@Table("task_status")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Purchase {
+public class TaskStatusEntity {
     @Id
-    private Integer purchaseId;
-    private String purchaseName;
-    private String purchaseDescription;
-    private BigDecimal cost;
-    private String responsibleUser;
-    private Integer eventId;
+    private Integer taskStatusId;
+    private String taskStatusName;
 
 }

@@ -9,13 +9,15 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 
-@Table("debt_status")
+@Table("event_user_list")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DebtStatus {
-
+public class EventUserListEntity {
     @Id
-    private Integer debtStatusId;
-    private String debtStatusName;
+    private Integer eventUserListId;
+    private Integer eventId;
+    private String userId;
+    private Integer roleId;
+
 }
