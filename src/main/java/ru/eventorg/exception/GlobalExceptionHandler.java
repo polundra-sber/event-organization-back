@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EventNotExistException.class)
     public ResponseEntity<EventNotExistResponse> handleEventNotExistException(EventNotExistException ex) {
         EventNotExistResponse response = new EventNotExistResponse().error(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 }
 
