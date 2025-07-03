@@ -955,9 +955,19 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TaskListItem'
+                  type: object
+                  properties:
+                    event_date:
+                      type: string
+                      format: date
+                      description: Дата проведения мероприятия
+                    tasks:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TaskListItem'
+                  required:
+                    - event_date
+                    - tasks
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
