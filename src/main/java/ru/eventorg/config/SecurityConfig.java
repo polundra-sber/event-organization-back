@@ -3,8 +3,8 @@ package ru.eventorg.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 import ru.eventorg.repository.UserSecretsEntityRepository;
 import ru.eventorg.security.JwtTokenUtil;
 
+
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -30,11 +31,9 @@ public class SecurityConfig {
             ReactiveAuthenticationManager authenticationManager,
             JwtTokenUtil jwtTokenUtil
     ) {
-        // 1. Создаём JWT-фильтр
         AuthenticationWebFilter jwtFilter = new AuthenticationWebFilter(authenticationManager);
         jwtFilter.setServerAuthenticationConverter(jwtAuthenticationConverter(jwtTokenUtil));
 
-        // 2. Настраиваем правила
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
@@ -49,10 +48,23 @@ public class SecurityConfig {
     private ServerAuthenticationConverter jwtAuthenticationConverter(JwtTokenUtil jwtTokenUtil) {
         return exchange -> {
             String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
-                String username = jwtTokenUtil.extractUsername(token);
-                return Mono.just(new UsernamePasswordAuthenticationToken(username, token));
+
+                return jwtTokenUtil.validateToken(token)
+                        .flatMap(valid -> {
+                            if (!valid) {
+                                return Mono.error(new BadCredentialsException("Invalid token"));
+                            }
+
+                            try {
+                                String username = jwtTokenUtil.extractUsername(token);
+                                return Mono.just(new UsernamePasswordAuthenticationToken(username, null));
+                            } catch (Exception e) {
+                                return Mono.error(new BadCredentialsException("Invalid token"));
+                            }
+                        });
             }
             return Mono.empty();
         };
@@ -70,12 +82,16 @@ public class SecurityConfig {
 
     @Bean
     public ReactiveAuthenticationManager authenticationManager(
-            ReactiveUserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
-        UserDetailsRepositoryReactiveAuthenticationManager manager =
-                new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
-        manager.setPasswordEncoder(passwordEncoder);
-        return manager;
+            ReactiveUserDetailsService userDetailsService) {
+        return authentication -> {
+            return userDetailsService.findByUsername(authentication.getName())
+                    .switchIfEmpty(Mono.error(new BadCredentialsException("User not found")))
+                    .map(user -> new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            null,  // Пароль не проверяем
+                            user.getAuthorities()
+                    ));
+        };
     }
 
     @Bean
