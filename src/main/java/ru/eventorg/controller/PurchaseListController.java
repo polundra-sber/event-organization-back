@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.eventorg.dto.PurchaseWithUserDto;
 import ru.eventorg.service.PurchaseListService;
-import ru.eventorg.entity.PurchaseEntity;
 
 @RestController
 public class PurchaseListController implements PurchaseListApi {
@@ -44,12 +44,17 @@ public class PurchaseListController implements PurchaseListApi {
                 .map(list-> ResponseEntity.ok(Flux.fromIterable(list)));
     }
 
-    private PurchaseListItem convertPurchaseToPurchaseListItem(PurchaseEntity purchaseEntity) {
-        return new PurchaseListItem()
-                .purchaseId(purchaseEntity.getPurchaseId())
-                .purchaseName(purchaseEntity.getPurchaseName())
-                .purchaseDescription(purchaseEntity.getPurchaseDescription())
-                .responsibleUser(purchaseEntity.getResponsibleUser());
+    private PurchaseListItem convertPurchaseToPurchaseListItem(PurchaseWithUserDto purchaseWithUserDto) {
+        PurchaseListItem item = new PurchaseListItem()
+                .purchaseId(purchaseWithUserDto.getPurchase().getPurchaseId())
+                .purchaseName(purchaseWithUserDto.getPurchase().getPurchaseName())
+                .purchaseDescription(purchaseWithUserDto.getPurchase().getPurchaseDescription())
+                .responsibleUser(purchaseWithUserDto.getPurchase().getResponsibleUser());
+
+        if (purchaseWithUserDto.getResponsibleUser() != null) {
+            item.responsibleUser(purchaseWithUserDto.getResponsibleUser().getName()+ " " +purchaseWithUserDto.getResponsibleUser().getSurname());
+        }
+        return item;
     }
 
     @Override
