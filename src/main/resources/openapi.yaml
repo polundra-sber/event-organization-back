@@ -831,7 +831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StuffListItem'А
+                $ref: '#/components/schemas/StuffListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
