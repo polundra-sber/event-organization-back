@@ -6,4 +6,5 @@ import ru.eventorg.entity.EventEntity;
 
 public interface EventEntityRepository extends R2dbcRepository<EventEntity, Integer> {
     Mono<EventEntity> findEventByEventId(Integer eventId);
+    Mono<Boolean> existsEventEntityByEventId(Integer eventId);
 }
