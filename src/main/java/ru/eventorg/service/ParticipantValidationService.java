@@ -2,6 +2,7 @@ package ru.eventorg.service;
 
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.UserNotEventParticipantException;
 import ru.eventorg.repository.EventUserListEntityRepository;
 
@@ -17,6 +18,6 @@ public class ParticipantValidationService {
         return eventUserListEntityRepository.existsEventIdByEventIdAndUserId(eventId, userLogin)
                 .flatMap(isParticipant -> isParticipant
                         ? Mono.empty()
-                        : Mono.error(new UserNotEventParticipantException()));
+                        : Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT)));
     }
 }
