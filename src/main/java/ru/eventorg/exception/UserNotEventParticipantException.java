@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class UserNotEventParticipantException extends RuntimeException {
 
-private final HttpStatus statusCode;
+  private final HttpStatus statusCode;
   private final String message;
 
   public UserNotEventParticipantException(ErrorState error) {

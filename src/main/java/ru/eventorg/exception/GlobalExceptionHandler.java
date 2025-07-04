@@ -14,13 +14,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<UserAlreadyExistResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
         UserAlreadyExistResponse response = new UserAlreadyExistResponse().error(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<AuthUnsuccessResponse> handleBadCredentialsException(BadCredentialsException ex) {
         AuthUnsuccessResponse response = new AuthUnsuccessResponse().error(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     @ExceptionHandler(EventNotExistException.class)
@@ -31,21 +31,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PurchaseNotExistException.class)
     public ResponseEntity<String> handlePurchaseNotExistException(PurchaseNotExistException ex) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
-    }
-
-    @ExceptionHandler(WrongUserRoleException.class)
-    public ResponseEntity<String> handleWrongUserRoleException(WrongUserRoleException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     @ExceptionHandler(UserNotEventParticipantException.class)
     public ResponseEntity<String> handleUserNotEventParticipantException(UserNotEventParticipantException ex) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(WrongUserRoleException.class)
+    public ResponseEntity<String> handleWrongUserRoleException(WrongUserRoleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     public ResponseEntity<String> handleUserAlreadyParticipantException(UserAlreadyParticipantException ex) {
@@ -53,6 +52,5 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
-
 }
 
