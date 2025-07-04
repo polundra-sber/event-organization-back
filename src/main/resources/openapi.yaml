@@ -30,6 +30,7 @@ tags:
   - name: My stuffs
   - name: User metadata
     description: Получение роли пользователя и статуса мероприятия
+  - name: Ignored
 
 
 paths:
@@ -431,6 +432,7 @@ paths:
           description: Пользователь не найден
     post:
       tags:
+        - Ignored
         - Participants list
       operationId: addParticipants
       summary: Добавить выбранных участников
@@ -674,6 +676,7 @@ paths:
                 $ref: '#/components/schemas/EventNotExistResponse'
     delete:
       tags:
+        - Ignored
         - Cost allocation list
       operationId: deleteParticipantsForPurchaseFromCostAllocationList
       summary: Удаление участников для данной покупки
@@ -716,6 +719,7 @@ paths:
   /events/{event_id}/cost-allocation-list/{purchase_id}/add-participants:
     post:
       tags:
+        - Ignored
         - Cost allocation list
       operationId: addParticipantsForPurchaseFromCostAllocationList
       summary: Добавить выбранных участников для покупки
