@@ -1,7 +1,16 @@
 package ru.eventorg.exception;
 
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
 public class UserNotEventParticipantException extends RuntimeException {
-    public UserNotEventParticipantException() {
-        super("Пользователь не является участником мероприятия");
-    }
+
+private final HttpStatus statusCode;
+  private final String message;
+
+  public UserNotEventParticipantException(ErrorState error) {
+    this.statusCode = error.getStatusCode();
+    this.message = error.getMessage();
+  }
 }

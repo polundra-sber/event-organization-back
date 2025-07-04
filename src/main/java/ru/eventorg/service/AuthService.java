@@ -3,13 +3,13 @@ package ru.eventorg.service;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.model.User;
 import org.openapitools.model.UserLogin;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.eventorg.exception.ErrorState;
 import ru.eventorg.security.JwtTokenUtil;
-
+import ru.eventorg.exception.BadCredentialsException;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -26,7 +26,7 @@ public class AuthService {
     public Mono<String> login(UserLogin request) {
         return userDetailsService.findByUsername(request.getLogin())
                 .filter(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()))
-                .switchIfEmpty(Mono.error(new BadCredentialsException("Invalid credentials")))
+                .switchIfEmpty(Mono.error(new BadCredentialsException(ErrorState.BAD_CREDENTIALS)))
                 .flatMap(user -> generateTokenForUser(user.getUsername()));
     }
 
