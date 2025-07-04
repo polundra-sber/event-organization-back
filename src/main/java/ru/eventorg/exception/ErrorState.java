@@ -26,6 +26,20 @@ public enum ErrorState {
     USER_NOT_EVENT_PARTICIPANT(
             HttpStatus.FORBIDDEN,
             "Пользователь не является участником мероприятия"
+    ),
+    PURCHASE_NOT_EXIST(
+            HttpStatus.NOT_FOUND,
+            "Покупка с указанным идентификатором не найдена"
+
+    ),
+    NOT_CREATOR_ROLE(
+            HttpStatus.FORBIDDEN,
+            "Вы не являетесь создателем мероприятия"
+    ),
+
+    NOT_CREATOR_OR_ORGANIZER_ROLE(
+            HttpStatus.FORBIDDEN,
+            "Вы не являетесь организатором или создателем мероприятия"
     );
 
     private final HttpStatus statusCode;
