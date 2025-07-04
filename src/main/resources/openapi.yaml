@@ -30,6 +30,7 @@ tags:
   - name: My stuffs
   - name: User metadata
     description: Получение роли пользователя и статуса мероприятия
+  - name: Ignored
 
 
 paths:
@@ -431,6 +432,7 @@ paths:
           description: Пользователь не найден
     post:
       tags:
+        - Ignored
         - Participants list
       operationId: addParticipants
       summary: Добавить выбранных участников
@@ -674,6 +676,7 @@ paths:
                 $ref: '#/components/schemas/EventNotExistResponse'
     delete:
       tags:
+        - Ignored
         - Cost allocation list
       operationId: deleteParticipantsForPurchaseFromCostAllocationList
       summary: Удаление участников для данной покупки
@@ -716,6 +719,7 @@ paths:
   /events/{event_id}/cost-allocation-list/{purchase_id}/add-participants:
     post:
       tags:
+        - Ignored
         - Cost allocation list
       operationId: addParticipantsForPurchaseFromCostAllocationList
       summary: Добавить выбранных участников для покупки
@@ -955,9 +959,24 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TaskListItem'
+                  type: object
+                  properties:
+                    event_date:
+                      type: string
+                      format: date
+                      description: Дата проведения мероприятия
+                    event_time:
+                      type: string
+                      format: time
+                      description: Время проведения мероприятия
+                      x-format: HH:MM
+                    tasks:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TaskListItem'
+                  required:
+                    - event_date
+                    - tasks
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -1235,9 +1254,18 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MyPurchaseListItem'
+                type: object
+                properties:
+                  myId:
+                    type: integer
+                    description: id пользователя, получающего список
+                  purchases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MyPurchaseListItem'
+                required:
+                  - myId
+                  - purchases
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -2136,16 +2164,15 @@ components:
           type: number
           format: float
           example: 123.99
-        receipt_id: #null отдаем, если не прикреплен чек
-          type: integer
-          example: 1
+        hasReceipt: 
+          type: boolean
 
       required:
         - purchase_id
         - purchase_name
         - responsible_user
         - cost
-        - receipt_id
+        - hasReceipt
 
     # Чек
     Receipt:
@@ -2285,9 +2312,15 @@ components:
           minLength: 1
           maxLength: 50
           example: Огурцы
-        responsible_user:
+        responsible_name:
           type: string
-          example: main_player
+          example: Ваня
+        responsible_surname:
+          type: string
+          example: Огурцов
+        responsible_id:
+          type: integer
+          example: 12345
         cost:
           type: number
           format: float
@@ -2296,11 +2329,16 @@ components:
           type: string
           maxLength: 254
           example: Купите 2кг
+        has_receipt:
+          type: boolean
       required:
         - purchase_id
         - purchase_name
         - event_id
         - event_name
+        - responsible_id
+        - responsible_name
+        - responsible_surname
 
     MyTaskListItem:
       type: object
