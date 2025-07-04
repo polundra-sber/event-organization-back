@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.UserNotEventParticipantException;
 import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.RoleEntityRepository;
@@ -27,7 +28,7 @@ public class RoleService {
                 .bind("login", login)
                 .map(row -> row.get("role_name", String.class))
                 .first()
-                .switchIfEmpty(Mono.error(new UserNotEventParticipantException()))
+                .switchIfEmpty(Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT)))
                 .flatMap(roleName -> {
                     if ("Создатель".equalsIgnoreCase(roleName)) {
                         return Mono.just(true);
@@ -44,7 +45,7 @@ public class RoleService {
                 .bind("login", login)
                 .map(row -> row.get("role_name", String.class))
                 .first()
-                .switchIfEmpty(Mono.error(new UserNotEventParticipantException()))
+                .switchIfEmpty(Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT)))
                 .flatMap(roleName -> {
                     if ("Организатор".equalsIgnoreCase(roleName) || "Создатель".equalsIgnoreCase(roleName)) {
                         return Mono.just(true);
