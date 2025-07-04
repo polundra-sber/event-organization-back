@@ -831,7 +831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StuffListItem'
+                $ref: '#/components/schemas/StuffListItem'А
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -961,6 +961,11 @@ paths:
                       type: string
                       format: date
                       description: Дата проведения мероприятия
+                    event_time:
+                      type: string
+                      format: time
+                      description: Время проведения мероприятия
+                      x-format: HH:MM
                     tasks:
                       type: array
                       items:
@@ -2146,16 +2151,15 @@ components:
           type: number
           format: float
           example: 123.99
-        receipt_id: #null отдаем, если не прикреплен чек
-          type: integer
-          example: 1
+        hasReceipt: 
+          type: boolean
 
       required:
         - purchase_id
         - purchase_name
         - responsible_user
         - cost
-        - receipt_id
+        - hasReceipt
 
     # Чек
     Receipt:
@@ -2306,6 +2310,8 @@ components:
           type: string
           maxLength: 254
           example: Купите 2кг
+        has_receipt:
+          type: boolean
       required:
         - purchase_id
         - purchase_name
