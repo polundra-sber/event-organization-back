@@ -30,7 +30,6 @@ public class JwtTokenUtil {
     // Генерация токена
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("username", userDetails.getUsername());
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
@@ -41,9 +40,13 @@ public class JwtTokenUtil {
     }
 
     // Валидация токена
-    public Mono<Boolean> validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return Mono.just(username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public Mono<Boolean> validateToken(String token) {
+        try {
+            // Проверяем подпись и срок действия
+            return Mono.just(!isTokenExpired(token));
+        } catch (Exception e) {
+            return Mono.just(false);
+        }
     }
 
     // Извлечение имени пользователя из токена
