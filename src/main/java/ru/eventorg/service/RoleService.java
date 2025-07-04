@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.eventorg.exception.UserNotEventParticipantException;
+import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.RoleEntityRepository;
 
 @Service
@@ -25,8 +27,14 @@ public class RoleService {
                 .bind("login", login)
                 .map(row -> row.get("role_name", String.class))
                 .first()
-                .map(roleName -> "Создатель".equalsIgnoreCase(roleName))
-                .defaultIfEmpty(false);
+                .switchIfEmpty(Mono.error(new UserNotEventParticipantException()))
+                .flatMap(roleName -> {
+                    if ("Создатель".equalsIgnoreCase(roleName)) {
+                        return Mono.just(true);
+                    } else {
+                        return Mono.error(new WrongUserRoleException("Вы не являетесь создателем мероприятия"));
+                    }
+                });
     }
 
     public Mono<Boolean> checkIfOrganizerOrHigher(Integer eventId, String login) {
@@ -36,10 +44,13 @@ public class RoleService {
                 .bind("login", login)
                 .map(row -> row.get("role_name", String.class))
                 .first()
-                .map(roleName ->
-                        "Организатор".equalsIgnoreCase(roleName) ||
-                                "Создатель".equalsIgnoreCase(roleName)
-                )
-                .defaultIfEmpty(false);
+                .switchIfEmpty(Mono.error(new UserNotEventParticipantException()))
+                .flatMap(roleName -> {
+                    if ("Организатор".equalsIgnoreCase(roleName) || "Создатель".equalsIgnoreCase(roleName)) {
+                        return Mono.just(true);
+                    } else {
+                        return Mono.error(new WrongUserRoleException("Вы не являетесь организатором или создателем мероприятия"));
+                    }
+                });
     }
 }
