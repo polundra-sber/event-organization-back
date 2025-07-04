@@ -1250,9 +1250,18 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MyPurchaseListItem'
+                type: object
+                properties:
+                  myId:
+                    type: integer
+                    description: id пользователя, получающего список
+                  purchases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MyPurchaseListItem'
+                required:
+                  - myId
+                  - purchases
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -2299,9 +2308,15 @@ components:
           minLength: 1
           maxLength: 50
           example: Огурцы
-        responsible_user:
+        responsible_name:
           type: string
-          example: main_player
+          example: Ваня
+        responsible_surname:
+          type: string
+          example: Огурцов
+        responsible_id:
+          type: integer
+          example: 12345
         cost:
           type: number
           format: float
@@ -2317,6 +2332,9 @@ components:
         - purchase_name
         - event_id
         - event_name
+        - responsible_id
+        - responsible_name
+        - responsible_surname
 
     MyTaskListItem:
       type: object
