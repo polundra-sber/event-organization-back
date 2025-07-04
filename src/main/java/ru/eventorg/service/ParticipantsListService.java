@@ -44,23 +44,25 @@ public class ParticipantsListService {
             JOIN user_secret  us ON us.login = eul.user_id
             WHERE eul.event_id = $1
             """;
-
-        return template.getDatabaseClient()
-                .sql(sql)
-                .bind(0, eventId)
-                .map((row, metadata) -> new FullUser(
-                        row.get("login", String.class),
-                        row.get("role", Integer.class),
-                        row.get("email", String.class),
-                        row.get("password", String.class),
-                        row.get("name", String.class),
-                        row.get("surname", String.class),
-                        row.get("commentMoneyTransfer", String.class)
-                ))
-                .all()
-                .switchIfEmpty(Mono.error(
-                        new EventNotExistException(ErrorState.EVENT_NOT_EXIST)
-                ));
+        return eventEntityRepository.existsEventEntityByEventId(eventId)
+                .flatMapMany(exists -> {
+                    if (!exists) {
+                        return Mono.error(new EventNotExistException(ErrorState.EVENT_NOT_EXIST));
+                    }
+                    return template.getDatabaseClient()
+                            .sql(sql)
+                            .bind(0, eventId)
+                            .map((row, metadata) -> new FullUser(
+                                    row.get("login", String.class),
+                                    row.get("role", Integer.class),
+                                    row.get("email", String.class),
+                                    row.get("password", String.class),
+                                    row.get("name", String.class),
+                                    row.get("surname", String.class),
+                                    row.get("commentMoneyTransfer", String.class)
+                            ))
+                            .all();
+                });
     }
 
     public Mono<Void> addParticipantsToEvent(Integer eventId, Mono<List<String>> logins) {
