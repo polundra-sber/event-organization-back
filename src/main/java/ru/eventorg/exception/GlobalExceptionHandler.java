@@ -28,5 +28,13 @@ public class GlobalExceptionHandler {
         EventNotExistResponse response = new EventNotExistResponse().error(ex.getMessage());
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
+
+    @ExceptionHandler(PurchaseNotExistException.class)
+    public ResponseEntity<String> handlePurchaseNotExistException(PurchaseNotExistException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+
 }
 

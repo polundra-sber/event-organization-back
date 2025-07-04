@@ -5,6 +5,7 @@ import org.openapitools.model.PurchaseListItem;
 import org.openapitools.model.PurchaseListItemCreator;
 import org.openapitools.model.PurchaseListItemEditor;
 import org.openapitools.model.PurchaseListItemResponsible;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -22,29 +23,38 @@ public class PurchaseListController implements PurchaseListApi {
     }
 
     @Override
-    public Mono<ResponseEntity<PurchaseListItem>> addPurchaseToPurchasesList(Integer eventId, Mono<PurchaseListItemCreator> purchaseListItemCreator, ServerWebExchange exchange) throws Exception {
-        return PurchaseListApi.super.addPurchaseToPurchasesList(eventId, purchaseListItemCreator, exchange);
+    public Mono<ResponseEntity<PurchaseListItem>> addPurchaseToPurchasesList(
+            Integer eventId,
+            Mono<PurchaseListItemCreator> purchaseListItemCreator,
+            ServerWebExchange exchange) {
+
+        return purchaseListService.addPurchaseToPurchasesList(eventId, purchaseListItemCreator)
+                .map(this::convertPurchaseWithUserDtoToPurchaseListItem)
+                .map(purchaseItem -> ResponseEntity.status(HttpStatus.CREATED).body(purchaseItem));
     }
 
     @Override
     public Mono<ResponseEntity<Void>> deletePurchaseFromPurchasesList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return PurchaseListApi.super.deletePurchaseFromPurchasesList(eventId, purchaseId, exchange);
+        return purchaseListService.deletePurchase(eventId, purchaseId)
+                .thenReturn(ResponseEntity.ok().<Void>build());
     }
 
     @Override
     public Mono<ResponseEntity<PurchaseListItem>> editPurchaseInPurchasesList(Integer eventId, Integer purchaseId, Mono<PurchaseListItemEditor> purchaseListItemEditor, ServerWebExchange exchange) throws Exception {
-        return PurchaseListApi.super.editPurchaseInPurchasesList(eventId, purchaseId, purchaseListItemEditor, exchange);
+        return purchaseListService.editPurchaseInPurchasesList(eventId, purchaseId, purchaseListItemEditor)
+                .map(this::convertPurchaseWithUserDtoToPurchaseListItem)
+                .map(ResponseEntity::ok);
     }
 
     @Override
     public Mono<ResponseEntity<Flux<PurchaseListItem>>> getPurchasesList(Integer eventId, ServerWebExchange exchange) throws Exception {
         return purchaseListService.getPurchasesByEventId(eventId)
-                .map(this::convertPurchaseToPurchaseListItem)
+                .map(this::convertPurchaseWithUserDtoToPurchaseListItem)
                 .collectList()
                 .map(list-> ResponseEntity.ok(Flux.fromIterable(list)));
     }
 
-    private PurchaseListItem convertPurchaseToPurchaseListItem(PurchaseWithUserDto purchaseWithUserDto) {
+    private PurchaseListItem convertPurchaseWithUserDtoToPurchaseListItem(PurchaseWithUserDto purchaseWithUserDto) {
         PurchaseListItem item = new PurchaseListItem()
                 .purchaseId(purchaseWithUserDto.getPurchase().getPurchaseId())
                 .purchaseName(purchaseWithUserDto.getPurchase().getPurchaseName())
