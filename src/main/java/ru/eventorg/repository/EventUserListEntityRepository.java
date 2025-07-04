@@ -11,4 +11,5 @@ public interface EventUserListEntityRepository extends R2dbcRepository<EventUser
     Flux<EventUserListEntity> findByEventId(Integer eventId);
     Mono<Boolean> existsEventIdByEventIdAndUserId(Integer eventId, String userId);
 
+    Mono<Boolean> existsByEventIdAndUserId(Integer eventId, String login);
 }

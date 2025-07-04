@@ -1,5 +1,7 @@
 package ru.eventorg.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.api.ParticipantsListApi;
 import org.openapitools.model.User;
 import org.openapitools.model.UserDemo;
@@ -8,19 +10,30 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.eventorg.security.SecurityUtils;
 import ru.eventorg.service.ParticipantsListService;
+import ru.eventorg.service.RoleService;
+import ru.eventorg.service.UserService;
 
 @RestController
+@RequiredArgsConstructor
+@Slf4j
 public class ParticipantsListController implements ParticipantsListApi {
 
     private final ParticipantsListService participantsListService;
+    private final RoleService roleService;
 
-    public ParticipantsListController(ParticipantsListService participantsListService) {
-        this.participantsListService = participantsListService;
-    }
+    // TODO переделать сигнатуру метода и избавиться от override
     @Override
     public Mono<ResponseEntity<Void>> addParticipants(Integer eventId, Flux<String> requestBody, ServerWebExchange exchange) throws Exception {
-        return ParticipantsListApi.super.addParticipants(eventId, requestBody, exchange);
+        Flux<String> loggedRequestBody = requestBody
+                .doOnNext(login -> log.info("Received login: {}", login));
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(login ->
+                        roleService.checkIfCreator(eventId, login)
+                                .flatMap(isCreator -> participantsListService.addParticipantsToEvent(eventId, loggedRequestBody)
+                                        .then(Mono.just(ResponseEntity.ok().<Void>build())))
+                );
     }
 
     @Override

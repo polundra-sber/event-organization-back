@@ -36,5 +36,23 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(WrongUserRoleException.class)
+    public ResponseEntity<String> handleWrongUserRoleException(WrongUserRoleException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotEventParticipantException.class)
+    public ResponseEntity<String> handleUserNotEventParticipantException(UserNotEventParticipantException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+
+    public ResponseEntity<String> handleUserAlreadyParticipantException(UserAlreadyParticipantException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
 }
 
