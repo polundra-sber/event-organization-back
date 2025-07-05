@@ -22,24 +22,22 @@ public class PurchaseListService {
     private final R2dbcEntityTemplate template;
     private final UserProfilesEntityRepository userProfilesEntityRepository;
     private final PurchaseEntityRepository purchaseEntityRepository;
-    private final EventValidationService eventValidationService;
+    private final EventService eventService;
     private final RoleService roleService;
-    private final ParticipantValidationService participantValidationService;
 
-    public PurchaseListService(R2dbcEntityTemplate template, UserProfilesEntityRepository userProfilesEntityRepository, EventEntityRepository eventEntityRepository, PurchaseEntityRepository purchaseEntityRepository, EventUserListEntityRepository eventUserListEntityRepository, EventValidationService eventValidation, ParticipantValidationService participantValidation, RoleService roleService, ParticipantValidationService participantValidationService) {
+    public PurchaseListService(R2dbcEntityTemplate template, UserProfilesEntityRepository userProfilesEntityRepository, EventEntityRepository eventEntityRepository, PurchaseEntityRepository purchaseEntityRepository, EventUserListEntityRepository eventUserListEntityRepository, EventService eventService, RoleService roleService) {
         this.template = template;
         this.userProfilesEntityRepository = userProfilesEntityRepository;
         this.purchaseEntityRepository = purchaseEntityRepository;
-        this.eventValidationService = eventValidation;
+        this.eventService = eventService;
         this.roleService = roleService;
-        this.participantValidationService = participantValidationService;
     }
 
     public Flux<PurchaseWithUserDto> getPurchasesByEventId(Integer eventId) {
         return getCurrentUserLogin()
                 .flatMapMany(userLogin ->
-                        participantValidationService.validateIsParticipant(eventId, userLogin)
-                                .then(eventValidationService.validateExists(eventId))
+                        roleService.validateIsParticipant(eventId, userLogin)
+                                .then(eventService.validateExists(eventId))
                                 .thenMany(purchaseEntityRepository.findPurchasesWithUserByEventId(eventId))
                                 .map(this::mapProjectionToPurchaseWithUserDto)
                                 .switchIfEmpty(Flux.just(new PurchaseWithUserDto())));
@@ -50,11 +48,12 @@ public class PurchaseListService {
             Mono<PurchaseListItemCreator> purchaseListItemCreator) {
         return getCurrentUserLogin()
                 .flatMap(currentUserLogin ->
-                        roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin)
-                                .then(eventValidationService.validateExists(eventId))
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin))
                                 .then(purchaseListItemCreator)
                                 .flatMap(creator ->
-                                        participantValidationService.validateIsParticipant(eventId, creator.getResponsibleUser())
+                                        roleService.validateIsParticipant(eventId, creator.getResponsibleLogin())
                                                 .then(createAndSavePurchase(eventId, creator))
                                 )
                 );
@@ -63,33 +62,49 @@ public class PurchaseListService {
     public Mono<Void> deletePurchase(Integer eventId, Integer purchaseId) {
         return getCurrentUserLogin()
                 .flatMap(currentUserLogin ->
-                        roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin)
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
                                 .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId)
                                         .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
+                                        .then(roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin))
                                         .then(purchaseEntityRepository.deleteByPurchaseIdAndEventId(purchaseId, eventId))
                                 )
                 );
     }
 
 
-    public Mono<PurchaseWithUserDto> editPurchaseInPurchasesList(Integer eventId, Integer purchaseId, Mono<PurchaseListItemEditor> purchaseListItemEditor){
+    public Mono<PurchaseWithUserDto> editPurchaseInPurchasesList(
+            Integer eventId,
+            Integer purchaseId,
+            Mono<PurchaseListItemEditor> purchaseListItemEditor) {
+
         return getCurrentUserLogin()
                 .flatMap(currentUserLogin ->
-                        roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin)
-                                .then(eventValidationService.validateExists(eventId))
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
                                 .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId))
                                 .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
-                                .flatMap(existing -> purchaseListItemEditor.flatMap(editor -> {
-                                    // Обновляем поля
-                                    existing.setPurchaseName(editor.getPurchaseName());
-                                    existing.setPurchaseDescription(editor.getPurchaseDescription());
-                                    existing.setResponsibleUser(editor.getResponsibleUser());
+                                .then(roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin))
+                                .then(purchaseListItemEditor.flatMap(editor ->
+                                                updateAndSavePurchase(eventId, purchaseId, editor)
+                                        )
+                                )
+                );
+    }
 
-                                    // Проверяем участника и сохраняем
-                                    return participantValidationService.validateIsParticipant(eventId, editor.getResponsibleUser())
-                                            .then(purchaseEntityRepository.save(existing))
+    public Mono<PurchaseWithUserDto> takePurchaseFromPurchasesList(Integer eventId, Integer purchaseId) {
+        return getCurrentUserLogin()
+                .flatMap(currentUserLogin ->
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(roleService.validateIsParticipant(eventId, currentUserLogin))
+                                .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId))
+                                .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
+                                .flatMap(purchase -> {
+                                    purchase.setResponsibleUser(currentUserLogin);
+                                    return purchaseEntityRepository.save(purchase)
                                             .flatMap(this::createPurchaseWithUserDto);
-                                }))
+                                })
                 );
     }
 
@@ -100,7 +115,7 @@ public class PurchaseListService {
         purchase.setPurchaseName(creator.getPurchaseName());
         purchase.setPurchaseDescription(creator.getPurchaseDescription());
         purchase.setCost(BigDecimal.ZERO);
-        purchase.setResponsibleUser(creator.getResponsibleUser());
+        purchase.setResponsibleUser(creator.getResponsibleLogin());
         purchase.setEventId(eventId);
 
         return template.insert(purchase)
@@ -134,18 +149,23 @@ public class PurchaseListService {
     }
 
 
-    public Mono<PurchaseWithUserDto> takePurchaseFromPurchasesList(Integer eventId, Integer purchaseId) {
-        return getCurrentUserLogin()
-                .flatMap(currentUserLogin ->
-                        participantValidationService.validateIsParticipant(eventId, currentUserLogin)
-                                .then(eventValidationService.validateExists(eventId))
-                                .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId))
-                                .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
-                                .flatMap(purchase -> {
-                                    purchase.setResponsibleUser(currentUserLogin);
-                                    return purchaseEntityRepository.save(purchase)
-                                            .flatMap(this::createPurchaseWithUserDto);
-                                })
-                );
+    private Mono<PurchaseWithUserDto> updateAndSavePurchase(
+            Integer eventId,
+            Integer purchaseId,
+            PurchaseListItemEditor editor) {
+
+        return purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId)
+                .flatMap(existing -> {
+                    existing.setPurchaseName(editor.getPurchaseName());
+                    existing.setPurchaseDescription(editor.getPurchaseDescription());
+                    existing.setResponsibleUser(editor.getResponsibleLogin());
+
+                    return roleService.validateIsParticipant(eventId, editor.getResponsibleLogin())
+                            .then(purchaseEntityRepository.save(existing))
+                            .flatMap(this::createPurchaseWithUserDto);
+                });
     }
+
+
+
 }
