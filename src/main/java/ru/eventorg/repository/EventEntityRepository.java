@@ -24,19 +24,4 @@ public interface EventEntityRepository extends R2dbcRepository<EventEntity, Inte
     WHERE e.event_id = :eventId AND e.status_id = 1
     """)
     Mono<Boolean> existsActiveEventById(@Param("eventId") Integer eventId);
-
-    default Mono<String> findEventStatusNameByEventId(Integer eventId, R2dbcEntityTemplate template) {
-        String query = """
-            SELECT es.event_status_name 
-            FROM event e
-            JOIN event_status es ON e.status_id = es.event_status_id
-            WHERE e.event_id = :eventId
-            """;
-
-        return template.getDatabaseClient()
-                .sql(query)
-                .bind("eventId", eventId)
-                .map((row, metadata) -> row.get("event_status_name", String.class))
-                .one();
-    }
 }
