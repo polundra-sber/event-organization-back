@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import ru.eventorg.dto.PurchaseWithUserDto;
 import ru.eventorg.entity.PurchaseEntity;
 import ru.eventorg.entity.UserProfileEntity;
+import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.EventNotExistException;
 import ru.eventorg.exception.PurchaseNotExistException;
 import ru.eventorg.exception.UserNotEventParticipantException;
@@ -54,7 +55,7 @@ public class PurchaseListService {
     public Mono<Void> deletePurchase(Integer eventId, Integer purchaseId) {
         //TODO: проверка, что удаляет организатор или создатель по user_id из токена
         return purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId)
-                .switchIfEmpty(Mono.error(new PurchaseNotExistException()))
+                .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.STUB)))
                 .then(purchaseEntityRepository.deleteByPurchaseIdAndEventId(purchaseId, eventId));
     }
 
@@ -63,7 +64,7 @@ public class PurchaseListService {
         //TODO: проверка, что редактирует организатор или создатель по user_id из токена
         return eventValidation.validateExists(eventId)
                 .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId))
-                .switchIfEmpty(Mono.error(new PurchaseNotExistException()))
+                .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.STUB)))
                 .flatMap(existing -> purchaseListItemEditor.flatMap(editor -> {
                     // Обновляем поля
                     existing.setPurchaseName(editor.getPurchaseName());

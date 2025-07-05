@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.entity.UserSecretEntity;
+import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.UserAlreadyExistsException;
 import ru.eventorg.repository.UserProfilesEntityRepository;
 import ru.eventorg.repository.UserSecretsEntityRepository;
@@ -34,10 +35,12 @@ public class UserService {
             boolean emailExists = tuple.getT2();
 
             if (loginExists) {
-                return Mono.error(new UserAlreadyExistsException("Login already taken"));
+                // TODO заменить заглушку
+                return Mono.error(new UserAlreadyExistsException(ErrorState.STUB));
             }
             if (emailExists) {
-                return Mono.error(new UserAlreadyExistsException("Email already registered"));
+                // TODO заменить заглушку
+                return Mono.error(new UserAlreadyExistsException(ErrorState.STUB));
             }
             return Mono.empty();
         });

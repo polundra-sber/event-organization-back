@@ -3,6 +3,7 @@ package ru.eventorg.exception;
 import org.openapitools.model.AuthUnsuccessResponse;
 import org.openapitools.model.EventNotExistResponse;
 import org.openapitools.model.UserAlreadyExistResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -46,6 +47,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
-
+    public ResponseEntity<String> handleUserAlreadyParticipantException(UserAlreadyParticipantException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
 }
 

@@ -1,26 +1,63 @@
 package ru.eventorg.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.api.ParticipantsListApi;
 import org.openapitools.model.User;
 import org.openapitools.model.UserDemo;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.eventorg.security.SecurityUtils;
 import ru.eventorg.service.ParticipantsListService;
+import ru.eventorg.service.RoleService;
+import ru.eventorg.service.UserService;
+
+import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
+@Slf4j
 public class ParticipantsListController implements ParticipantsListApi {
 
     private final ParticipantsListService participantsListService;
+    private final RoleService roleService;
 
-    public ParticipantsListController(ParticipantsListService participantsListService) {
-        this.participantsListService = participantsListService;
-    }
-    @Override
-    public Mono<ResponseEntity<Void>> addParticipants(Integer eventId, Flux<String> requestBody, ServerWebExchange exchange) throws Exception {
-        return ParticipantsListApi.super.addParticipants(eventId, requestBody, exchange);
+    /**
+     * POST /events/{event_id}/participants-list/add-participant : Добавить выбранных участников
+     *
+     * @param eventId  (required)
+     * @param requestBody (required)
+     * @return Участники успешно добавлены (status code 200)
+     *         or Неверный формат данных или некорректные логины (status code 400)
+     *         or Событие не найдено (status code 404)
+     */
+    @RequestMapping(
+            method = RequestMethod.POST,
+            value = "/events/{event_id}/participants-list/add-participant",
+            produces = { "application/json" }
+    )
+    public Mono<ResponseEntity<Void>> addParticipants(
+            @Parameter(name = "event_id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("event_id") Integer eventId,
+            @Valid @RequestBody Mono<List<String>> requestBody,
+            @Parameter(hidden = true) final ServerWebExchange exchange) throws Exception {
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(login ->
+                        roleService.checkIfCreator(eventId, login)
+                                .flatMap(isCreator -> participantsListService.addParticipantsToEvent(eventId, requestBody)
+                                        .then(Mono.just(ResponseEntity.ok().<Void>build())))
+                );
     }
 
     @Override
@@ -42,6 +79,25 @@ public class ParticipantsListController implements ParticipantsListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<UserDemo>>> searchUsers(Integer eventId, String text, Integer seq, ServerWebExchange exchange) throws Exception {
-        return ParticipantsListApi.super.searchUsers(eventId, text, seq, exchange);
+        if (seq == null || seq < 0) {
+            return Mono.just(ResponseEntity.badRequest().build());
+        }
+        if (text == null || text.isBlank()) {
+            return Mono.just(ResponseEntity.ok(Flux.empty()));
+        }
+
+        Flux<UserDemo> result = participantsListService.searchUsersByNameSurnameEmail(eventId, text, seq)
+                .map(fullUser -> {
+                    UserDemo dto = new UserDemo();
+                    dto.setLogin(fullUser.getLogin());
+                    dto.setEmail(fullUser.getEmail());
+                    dto.setName(fullUser.getName());
+                    dto.setSurname(fullUser.getSurname());
+                    return dto;
+                });
+
+        return result
+                .hasElements()
+                .map(hasElements -> ResponseEntity.ok(result));
     }
 }

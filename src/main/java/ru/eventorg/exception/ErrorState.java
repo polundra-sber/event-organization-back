@@ -40,6 +40,10 @@ public enum ErrorState {
     NOT_CREATOR_OR_ORGANIZER_ROLE(
             HttpStatus.FORBIDDEN,
             "Вы не являетесь организатором или создателем мероприятия"
+    ),
+    STUB(
+            HttpStatus.I_AM_A_TEAPOT,
+            "ЭТО ЗАГЛУШКА ПОКА НЕТ НОРМАЛЬНОГО СТАТУСА"
     );
 
     private final HttpStatus statusCode;
