@@ -47,29 +47,32 @@ public class RoleService {
 
     /**
      * Возвращает роль пользователя в рамках указанного мероприятия.
-     * Если пользователь не участвует в событии, бросает UserNotEventParticipantException,
-     * если мероприятия не существует, бросает EventNotExistException
+     * Если пользователь не участвует в событии, бросает UserNotEventParticipantException
      *
      * @param eventId идентификатор мероприятия
      * @param login   логин пользователя
      * @return Mono с названием роли
      */
     public Mono<String> getUserRoleInEvent(Integer eventId, String login) {
-        return eventEntityRepository.existsEventEntityByEventId(eventId)
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new EventNotExistException(ErrorState.EVENT_NOT_EXIST));
+        return template.getDatabaseClient()
+                .sql(SQL_CHECK_ROLE)
+                .bind(0, eventId)
+                .bind(1, login)
+                .map((row, meta) -> row.get("role_name", String.class))
+                .first()
+                .switchIfEmpty(
+                        Mono.error(new UserNotEventParticipantException(
+                                ErrorState.USER_NOT_EVENT_PARTICIPANT))
+                );
+    }
+
+    public Mono<Void> validateIsParticipant(Integer eventId, String userLogin) {
+        return getUserRoleInEvent(eventId, userLogin)
+                .flatMap(roleName -> {
+                    if ("Не допущен".equals(roleName)) {
+                        return Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT));
                     }
-                    return template.getDatabaseClient()
-                            .sql(SQL_CHECK_ROLE)
-                            .bind(0, eventId)
-                            .bind(1, login)
-                            .map((row, meta) -> row.get("role_name", String.class))
-                            .first()
-                            .switchIfEmpty(
-                                    Mono.error(new UserNotEventParticipantException(
-                                            ErrorState.USER_NOT_EVENT_PARTICIPANT))
-                            );
+                    return Mono.empty();
                 });
     }
 }
