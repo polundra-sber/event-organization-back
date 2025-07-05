@@ -41,23 +41,13 @@ public class HomePageService {
     public Mono<Void> completeEvent(Integer eventId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(currentUserLogin ->
-                        Mono.zip(
-                                        roleService.checkIfCreator(eventId, currentUserLogin),
-                                        eventService.getEventStatus(eventId)
-                                )
-                                .flatMap(tuple -> {
-                                    boolean isCreator = tuple.getT1();
-                                    String statusName = tuple.getT2();
-
-                                    if (!isCreator) {
-                                        return Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_ROLE));
-                                    }
-                                    if (!EventStatus.ACTIVE.getDisplayName().equalsIgnoreCase(statusName)) {
-                                        return Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE));
-                                    }
-                                    return updateEventStatus(eventId, 2);
-                                })
-                );
+                        roleService.checkIfCreator(eventId, currentUserLogin)
+                                .then(eventService.validateExists(eventId))
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(updateEventStatus(eventId, 2))
+                                .onErrorResume(WrongUserRoleException.class, e ->
+                                        Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_ROLE))
+                                ));
     }
 
     public Mono<EventCustom> createEvent(EventEditor event) {
@@ -71,51 +61,23 @@ public class HomePageService {
     public Mono<Void> deleteEvent(Integer eventId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(currentUserLogin ->
-                        Mono.zip(
-                                        roleService.checkIfCreator(eventId, currentUserLogin),
-                                        eventService.getEventStatus(eventId)
-                                )
-                                .flatMap(tuple -> {
-                                    boolean isCreator = tuple.getT1();
-                                    String statusName = tuple.getT2();
-
-                                    if (!isCreator) {
-                                        return Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_ROLE));
-                                    }
-                                    if (!EventStatus.ACTIVE.getDisplayName().equalsIgnoreCase(statusName)) {
-                                        return Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE));
-                                    }
-                                    return updateEventStatus(eventId, 3);
-                                })
-                );
+                        roleService.checkIfCreator(eventId, currentUserLogin)
+                                .then(eventService.validateExists(eventId))
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(updateEventStatus(eventId, 3))
+                                .onErrorResume(WrongUserRoleException.class, e ->
+                                        Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_ROLE))
+                                ));
     }
 
-    //здесь нужно проверять роль пользователя
-    // проверка, что меро существует, что я его участник
     public Mono<EventEntity> editEvent(Integer eventId, EventEditor editor) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(currentUserLogin ->
-                        Mono.zip(
-                                        roleService.checkIfCreator(eventId, currentUserLogin),
-                                        eventService.getEventStatus(eventId),
-                                        eventRepository.getEventByEventId(eventId)
-                                )
-                                .flatMap(tuple -> {
-                                    Boolean isCreator = tuple.getT1();
-                                    String statusName = tuple.getT2();
-                                    EventEntity event = tuple.getT3();
-
-                                    // 1. Проверка что пользователь - создатель
-                                    if (!isCreator) {
-                                        return Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_ROLE));
-                                    }
-
-                                    // 2. Проверка что мероприятие активно
-                                    if (!EventStatus.ACTIVE.getDisplayName().equalsIgnoreCase(statusName)) {
-                                        return Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE));
-                                    }
-
-                                    // 3. Обновление и сохранение
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(roleService.checkIfCreator(eventId, currentUserLogin))
+                                .then(eventRepository.getEventByEventId(eventId))
+                                .flatMap(event -> {
                                     EventEntity updatedEvent = updateEventFromEditor(event, editor);
                                     return eventRepository.save(updatedEvent);
                                 })
@@ -123,61 +85,45 @@ public class HomePageService {
     }
 
     public Mono<EventPreviewCustom> findEventById(Integer eventId) {
-        return eventRepository.getActiveOrCompletedEventById(eventId)
-                .switchIfEmpty(Mono.error(new EventNotExistException(ErrorState.EVENT_NOT_EXIST)))
+        return eventService.getActiveOrCompletedEvent(eventId)
                 .flatMap(this::buildEventPreviewCustom);
     }
 
-    //проверить работу
+
     public Mono<EventCustom> getEventById(Integer eventId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username ->
-                        Mono.zip(
-                                roleService.getUserRoleInEvent(eventId, username),
-                                eventService.getEventStatus(eventId),
-                                Mono.just(username) // Сохраняем username для дальнейшего использования
-                        )
-                )
-                .flatMap(tuple -> {
-                    String roleName = tuple.getT1();
-                    String statusName = tuple.getT2();
-                    String username = tuple.getT3(); // Получаем сохраненное имя пользователя
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(roleService.validateIsParticipant(eventId, username))
+                                .then(Mono.defer(() -> {
+                                    String query = """
+                        SELECT 
+                            e.event_id,
+                            e.event_name,
+                            e.event_description,
+                            e.location,
+                            e.event_date,
+                            e.event_time,
+                            e.chat_link,
+                            es.event_status_name,
+                            r.role_name
+                        FROM event e
+                        JOIN event_status es ON e.status_id = es.event_status_id
+                        JOIN event_user_list eul ON e.event_id = eul.event_id
+                        JOIN role r ON eul.role_id = r.role_id
+                        WHERE e.event_id = :eventId
+                        AND eul.user_id = :userId
+                        """;
 
-                    // Проверка роли
-                    if (UserRole.NOT_ALLOWED.getDisplayName().equalsIgnoreCase(roleName)) {
-                        return Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT));
-                    }
-
-                    // Проверка статуса мероприятия
-                    if (!EventStatus.ACTIVE.getDisplayName().equalsIgnoreCase(statusName) &&
-                            !EventStatus.COMPLETED.getDisplayName().equalsIgnoreCase(statusName)) {
-                        return Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE));
-                    }
-                    String query = """
-                    SELECT 
-                        e.event_id,
-                        e.event_name,
-                        e.event_description,
-                        e.location,
-                        e.event_date,
-                        e.event_time,
-                        e.chat_link,
-                        es.event_status_name,
-                        r.role_name
-                    FROM event e
-                    JOIN event_status es ON e.status_id = es.event_status_id
-                    JOIN event_user_list eul ON e.event_id = eul.event_id
-                    JOIN role r ON eul.role_id = r.role_id
-                    WHERE e.event_id = :eventId
-                    AND eul.user_id = :userId
-                    """;
-                    return template.getDatabaseClient()
-                            .sql(query)
-                            .bind("eventId", eventId)
-                            .bind("userId", username)
-                            .map(this::mapToEventCustom)
-                            .one();
-                });
+                                    return template.getDatabaseClient()
+                                            .sql(query)
+                                            .bind("eventId", eventId)
+                                            .bind("userId", username)
+                                            .map(this::mapToEventCustom)
+                                            .one();
+                                }))
+                );
     }
 
 
@@ -206,34 +152,24 @@ public class HomePageService {
                 });
     }
 
-    //пользователь - участник
+
     public Mono<Void> leaveEvent(Integer eventId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(userId ->
-                        // 1. Проверяем что мероприятие активно
-                        eventRepository.existsActiveEventById(eventId)
-                                .flatMap(isActive -> {
-                                    if (!isActive) {
-                                        return Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE));
-                                    }
-
-                                    // 2. Проверяем роль пользователя
-                                    return roleService.getUserRoleInEvent(eventId, userId)
-                                            .flatMap(roleName -> {
-                                                // Проверяем, что пользователь не создатель
-                                                if (UserRole.CREATOR.getDisplayName().equalsIgnoreCase(roleName)) {
-                                                    return Mono.error(new WrongUserRoleException(ErrorState.CREATOR_CANNOT_LEAVE));
-                                                }
-                                                // Проверяем, что пользователь не "Не допущен"
-                                                if (UserRole.NOT_ALLOWED.getDisplayName().equalsIgnoreCase(roleName)) {
-                                                    return Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT));
-                                                }
-                                                // Если все проверки пройдены - удаляем запись
-                                                return eventUserListRepository.deleteEventUserListEntityByEventIdAndUserId(eventId, userId)
-                                                        .then();
-                                            });
-                                })
-                );
+                        eventService.validateExists(eventId)
+                                .then(eventService.validateEventIsActive(eventId))
+                                .then(roleService.getUserRoleInEvent(eventId, userId)
+                                        .flatMap(roleName -> {
+                                            if (UserRole.CREATOR.getDisplayName().equalsIgnoreCase(roleName)) {
+                                                return Mono.error(new WrongUserRoleException(ErrorState.CREATOR_CANNOT_LEAVE));
+                                            }
+                                            if (UserRole.NOT_ALLOWED.getDisplayName().equalsIgnoreCase(roleName)) {
+                                                return Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT));
+                                            }
+                                            return eventUserListRepository.deleteEventUserListEntityByEventIdAndUserId(eventId, userId);
+                                        })
+                                        .then()
+                                ));
     }
 
     public Mono<String> sendJoinEventRequest(Integer eventId) {
@@ -241,7 +177,7 @@ public class HomePageService {
                 .flatMap(currentUserId -> checkAndJoinEvent(eventId, currentUserId));
     }
 
-    // Private helper methods
+
     private Mono<Void> updateEventStatus(Integer eventId, Integer statusId) {
         return eventRepository.getEventByEventId(eventId)
                 .switchIfEmpty(Mono.error(new EventNotExistException(ErrorState.EVENT_NOT_EXIST)))
@@ -345,25 +281,17 @@ public class HomePageService {
                         return Mono.error(new UserAlreadyJoinException(ErrorState.USER_ALREADY_JOINED));
                     }
 
-                    // Проверяем существование мероприятия и его статус
-                    return eventRepository.getEventByEventId(eventId)
-                            .switchIfEmpty(Mono.error(new EventNotExistException(ErrorState.EVENT_NOT_EXIST)))
-                            .flatMap(event -> eventStatusRepository.getEventStatusByEventStatusId(event.getStatusId())
-                                    .flatMap(status -> {
-                                        if (!EventStatus.ACTIVE.getDisplayName().equalsIgnoreCase(status.getEventStatusName())) {
-                                            return Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE));
-                                        }
+                    return eventService.validateExists(eventId)
+                            .then(eventService.validateEventIsActive(eventId))
+                            .then(Mono.defer(() -> {
+                                EventUserListEntity newJoin = new EventUserListEntity();
+                                newJoin.setEventId(eventId);
+                                newJoin.setUserId(userId);
+                                newJoin.setRoleId(4);
 
-                                        // Если все проверки пройдены - создаем запись
-                                        EventUserListEntity newJoin = new EventUserListEntity();
-                                        newJoin.setEventId(eventId);
-                                        newJoin.setUserId(userId);
-                                        newJoin.setRoleId(4); // роль участника
-
-                                        return eventUserListRepository.save(newJoin)
-                                                .thenReturn("Заявка успешно отправлена");
-                                    })
-                            );
+                                return eventUserListRepository.save(newJoin)
+                                        .thenReturn("Заявка успешно отправлена");
+                            }));
                 });
     }
 }
