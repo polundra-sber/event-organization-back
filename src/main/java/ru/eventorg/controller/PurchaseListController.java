@@ -69,6 +69,9 @@ public class PurchaseListController implements PurchaseListApi {
 
     @Override
     public Mono<ResponseEntity<PurchaseListItemResponsible>> takePurchaseFromPurchasesList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return PurchaseListApi.super.takePurchaseFromPurchasesList(eventId, purchaseId, exchange);
+        return purchaseListService.takePurchaseFromPurchasesList(eventId, purchaseId)
+                .map(this::convertPurchaseWithUserDtoToPurchaseListItem)
+                .map(ResponseEntity::ok);
+
     }
 }
