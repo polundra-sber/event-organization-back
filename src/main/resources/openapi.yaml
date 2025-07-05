@@ -1771,6 +1771,9 @@ components:
     # Редактирование мероприятия
     EventEditor:
       type: object
+      required:
+        - event_name
+        - event_date
       properties:
         event_name:
           type: string
