@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum UserRole {
     CREATOR("Создатель"),
     PARTICIPANT("Участник"),
-    MODERATOR("Модератор"),
+    ORGANIZER("Организатор"),
     NOT_ALLOWED("Не допущен");
 
     private final String displayName;
