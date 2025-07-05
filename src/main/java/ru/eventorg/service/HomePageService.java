@@ -134,7 +134,7 @@ public class HomePageService {
                 .flatMap(username ->
                         Mono.zip(
                                 roleService.getUserRoleInEvent(eventId, username),
-                                eventRepository.findEventStatusNameByEventId(eventId, template),
+                                eventService.getEventStatus(eventId),
                                 Mono.just(username) // Сохраняем username для дальнейшего использования
                         )
                 )
