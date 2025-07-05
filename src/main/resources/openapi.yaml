@@ -398,7 +398,7 @@ paths:
       tags:
         - Participants list
       operationId: searchUsers
-      summary: Найти первых 10 пользователей для добавления
+      summary: Найти 10 пользователей для добавления
       parameters:
         - in: path
           name: event_id
@@ -426,6 +426,56 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/UserDemo'
+        '400':
+          description: Неверные параметры запроса
+        '404':
+          description: Пользователь не найден
+    post:
+      tags:
+        - Ignored
+        - Participants list
+      operationId: addParticipantsToParticipantsList
+      summary: Добавить выбранных участников
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddParticipantsRequest'
+      responses:
+        '200':
+          description: Участники успешно добавлены
+        '400':
+          description: Неверный формат данных или некорректные логины
+        '404':
+          description: Событие не найдено
+
+  /events/{event_id}/participants-list/{participant_login}/delete-participant:
+    delete:
+      tags:
+        - Participants list
+      operationId: deleteParticipantFromParticipantsList
+      summary: Удалить пользователя из списка участников
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: participant_login
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Участник ликвидирован
         '400':
           description: Неверные параметры запроса
         '404':
@@ -604,7 +654,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PurchaseListItemResponsible'
+                $ref: '#/components/schemas/PurchaseListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -930,7 +980,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StuffListItemResponsible'
+                $ref: '#/components/schemas/StuffListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -968,8 +1018,8 @@ paths:
                     event_time:
                       type: string
                       format: time
+                      example: 16:00
                       description: Время проведения мероприятия
-                      x-format: HH:MM
                     tasks:
                       type: array
                       items:
@@ -1103,7 +1153,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskListItemResponsible'
+                $ref: '#/components/schemas/TaskListItem'
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -1256,15 +1306,15 @@ paths:
               schema:
                 type: object
                 properties:
-                  myId:
-                    type: integer
-                    description: id пользователя, получающего список
+                  user_login:
+                    type: string
+                    description: login пользователя, получающего список
                   purchases:
                     type: array
                     items:
                       $ref: '#/components/schemas/MyPurchaseListItem'
                 required:
-                  - myId
+                  - user_login
                   - purchases
         '404':
           description: Мероприятие с данным идентификатором не найдено
@@ -1823,9 +1873,9 @@ components:
           minLength: 3
           maxLength: 20
           example: main_player
-        role_id:
-          type: integer
-          example: 1
+        role_name:
+          type: string
+          example: создатель
         password:
           type: string
           minLength: 8
@@ -1851,10 +1901,8 @@ components:
           maxLength: 254
           example: "На сбер: 89996362576"
       required:
-#        - user_id
         - login
-#        - password
-        - role_id
+        - role_name
         - email
         - name
         - surname
@@ -1969,13 +2017,15 @@ components:
           default: "Описание не добавлено"
         task_status_name:
           type: string
-        responsible_user:
+        responsible_login:
           type: string
-          default: "Не назначен"
+        responsible_name:
+          type: string
+        responsible_surname:
+          type: string
         deadline_date:
           type: string
           format: date
-          example: 12.06.2025
         deadline_time:
           type: string
           format: time
@@ -1996,9 +2046,8 @@ components:
           default: "Описание не добавлено"
         task_status_name:
           type: string
-        responsible_user:
+        responsible_login:
           type: string
-          default: "Не назначен"
         deadline_date:
           type: string
           format: date
@@ -2025,9 +2074,8 @@ components:
           default: "Описание не добавлено"
         task_status_name:
           type: string
-        responsible_user:
+        responsible_login:
           type: string
-          default: "Не назначен"
         deadline_date:
           type: string
           format: date
@@ -2037,28 +2085,7 @@ components:
           format: time
           example: 16:00
 
-    TaskListItemResponsible:
-      type: object
-      properties:
-        task_id:
-          type: integer
-        task_name:
-          type: string
-          minLength: 1
-          maxLength: 50
-          example: Заказать торт
-        task_description:
-          type: string
-          maxLength: 254
-          example: Торт без орехов и без апельсина
-          default: "Описание не добавлено"
-        responsible_user:
-          type: string
-          example: main_player
-      required:
-        - task_id
-        - task_name
-        - responsible_user
+
 
     # Покупка в списке
     PurchaseListItem:
@@ -2076,35 +2103,16 @@ components:
           type: string
           maxLength: 254
           example: Купите 2кг
-        responsible_user:
+        responsible_login:
           type: string
           example: main_player
+        responsible_name:
+          type: string
+        responsible_surname:
+          type: string
       required:
         - purchase_id
         - purchase_name
-
-    PurchaseListItemResponsible:
-      type: object
-      properties:
-        purchase_id:
-          type: integer
-          example: 1
-        purchase_name:
-          type: string
-          minLength: 1
-          maxLength: 50
-          example: Огурцы
-        purchase_description:
-          type: string
-          maxLength: 254
-          example: Купите 2кг
-        responsible_user:
-          type: string
-          example: main_player
-      required:
-        - purchase_id
-        - purchase_name
-        - responsible_user
 
     PurchaseListItemCreator:
       type: object
@@ -2118,7 +2126,7 @@ components:
           type: string
           maxLength: 254
           example: Купите 2 кг
-        responsible_user:
+        responsible_login:
           type: string
           minLength: 3
           maxLength: 20
@@ -2138,7 +2146,7 @@ components:
           type: string
           maxLength: 254
           example: Купите 2 кг
-        responsible_user:
+        responsible_login:
           type: string
           minLength: 3
           maxLength: 20
@@ -2155,22 +2163,19 @@ components:
           minLength: 1
           maxLength: 50
           example: Огурцы
-        responsible_user:
+        responsible_name:
           type: string
-          minLength: 3
-          maxLength: 20
-          example: main_player
+        responsible_surname:
+          type: string
         cost:
           type: number
           format: float
           example: 123.99
         hasReceipt: 
           type: boolean
-
       required:
         - purchase_id
         - purchase_name
-        - responsible_user
         - cost
         - hasReceipt
 
@@ -2201,14 +2206,14 @@ components:
         user_id:
           type: integer
           example: 1123
-        role_id:
-          type: integer
-          example: 1
+        role_name:
+          type: string
+          example: участник
       required:
         - event_user_list_id
         - event_id
         - user_id
-        - role_id
+        - role_name
 
     # Вещь
     StuffListItem:
@@ -2216,7 +2221,6 @@ components:
       required:
         - stuff_id
         - stuff_name
-        - responsible_user
       properties:
         stuff_id:
           type: integer
@@ -2230,9 +2234,12 @@ components:
           maxLength: 254
           example: 5 метров, канатная
           default: "Описание не добавлено"
-        responsible_user:
+        responsible_login:
           type: string
-          default: "Не назначен"
+        responsible_name:
+          type: string
+        responsible_surname:
+          type: string
 
     StuffListItemCreator:
       type: object
@@ -2247,9 +2254,8 @@ components:
           maxLength: 254
           example: 5 метров, канатная
           default: "Описание не добавлено"
-        responsible_user:
+        responsible_login:
           type: string
-          default: "Не назначен"
       required:
         - stuff_name
 
@@ -2266,32 +2272,9 @@ components:
           maxLength: 254
           example: 5 метров, канатная
           default: "Описание не добавлено"
-        responsible_user:
+        responsible_login:
           type: string
-          default: "Не назначен"
 
-    StuffListItemResponsible:
-      type: object
-      properties:
-        stuff_id:
-          type: integer
-        stuff_name:
-          type: string
-          minLength: 1
-          maxLength: 50
-          example: Веревка
-        stuff_description:
-          type: string
-          maxLength: 254
-          example: 5 метров, канатная
-          default: "Описание не добавлено"
-        responsible_user:
-          type: string
-          default: "Не назначен"
-      required:
-        - stuff_id
-        - stuff_name
-        - responsible_user
 
     # Позиции в моих списках
     MyPurchaseListItem:
@@ -2318,9 +2301,8 @@ components:
         responsible_surname:
           type: string
           example: Огурцов
-        responsible_id:
-          type: integer
-          example: 12345
+        responsible_login:
+          type: string
         cost:
           type: number
           format: float
@@ -2336,7 +2318,7 @@ components:
         - purchase_name
         - event_id
         - event_name
-        - responsible_id
+        - responsible_login
         - responsible_name
         - responsible_surname
 
@@ -2418,9 +2400,11 @@ components:
         example: Шашлыки
       debt_id:
         type: integer
-      recipient_id:
-        type: integer
+      recipient_login:
+        type: string
       recipient_name:
+        type: string
+      recipient_surname:
         type: string
       comment_money_transfer:
         type: string
@@ -2436,8 +2420,9 @@ components:
         - event_id
         - event_name
         - debt_id
-        - recipient_id
+        - recipient_login
         - recipient_name
+        - recipient_surname
         - comment_money_transfer
         - debt_amount
 
@@ -2451,9 +2436,11 @@ components:
         example: Шашлыки
       debt_id:
         type: integer
-      payer_id:
-        type: integer
+      payer_login:
+        type: string
       payer_name:
+        type: string
+      payer_surname:
         type: string
       debt_status_name:
         type: string
@@ -2467,8 +2454,9 @@ components:
         - event_id
         - event_name
         - debt_id
-        - payer_id
+        - payer_login
         - payer_name
+        - payer_surname
         - debt_amount
 
     
