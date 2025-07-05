@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(UserAlreadyJoinException.class)
+    public ResponseEntity<String> handleUserAlreadyJoinException(UserAlreadyJoinException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
     @ExceptionHandler(PurchaseNotExistException.class)
     public ResponseEntity<String> handlePurchaseNotExistException(PurchaseNotExistException ex) {
         String response = ex.getMessage();
@@ -51,6 +57,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(EventNotActiveException.class)
+    public ResponseEntity<String> handleEventNotActiveException(EventNotActiveException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 }
 
