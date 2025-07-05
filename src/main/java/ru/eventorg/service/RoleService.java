@@ -5,10 +5,10 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.eventorg.exception.ErrorState;
-import ru.eventorg.exception.EventNotExistException;
 import ru.eventorg.exception.UserNotEventParticipantException;
 import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.EventEntityRepository;
+import ru.eventorg.service.enums.UserRole;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +26,7 @@ public class RoleService {
     public Mono<Boolean> checkIfCreator(Integer eventId, String login) {
         return getUserRoleInEvent(eventId, login)
                 .flatMap(roleName -> {
-                    if ("Создатель".equalsIgnoreCase(roleName)) {
+                    if (UserRole.CREATOR.getDisplayName().equalsIgnoreCase(roleName)) {
                         return Mono.just(true);
                     }
                     return Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_ROLE));
@@ -36,8 +36,8 @@ public class RoleService {
     public Mono<Boolean> checkIfOrganizerOrHigher(Integer eventId, String login) {
         return getUserRoleInEvent(eventId, login)
                 .flatMap(roleName -> {
-                    if ("Организатор".equalsIgnoreCase(roleName)
-                            || "Создатель".equalsIgnoreCase(roleName)) {
+                    if (UserRole.ORGANIZER.getDisplayName().equalsIgnoreCase(roleName)
+                            || UserRole.CREATOR.getDisplayName().equalsIgnoreCase(roleName)) {
                         return Mono.just(true);
                     }
                     return Mono.error(new WrongUserRoleException(
@@ -69,7 +69,7 @@ public class RoleService {
     public Mono<Void> validateIsParticipant(Integer eventId, String userLogin) {
         return getUserRoleInEvent(eventId, userLogin)
                 .flatMap(roleName -> {
-                    if ("Не допущен".equals(roleName)) {
+                    if (UserRole.NOT_ALLOWED.getDisplayName().equals(roleName)) {
                         return Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT));
                     }
                     return Mono.empty();

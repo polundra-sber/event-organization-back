@@ -9,7 +9,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import ru.eventorg.security.SecurityUtils;
 import ru.eventorg.service.EventService;
-import ru.eventorg.service.ParticipantValidationService;
 import ru.eventorg.service.RoleService;
 
 @RestController
@@ -17,13 +16,12 @@ import ru.eventorg.service.RoleService;
 public class UserMetadataController implements UserMetadataApi {
     private final RoleService roleService;
     private final EventService eventService;
-    private final ParticipantValidationService participantValidationService;
 
     @Override
     public Mono<ResponseEntity<EventUserMetadata>> getUserMetadata(Integer eventId, ServerWebExchange exchange) throws Exception {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(login ->
-                        participantValidationService.validateIsParticipant(eventId, login)
+                        roleService.validateIsParticipant(eventId, login)
                                 .then(
                                         Mono.zip(
                                                 roleService.getUserRoleInEvent(eventId, login),
