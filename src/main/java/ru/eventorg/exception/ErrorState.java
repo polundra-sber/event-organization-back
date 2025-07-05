@@ -44,6 +44,16 @@ public enum ErrorState {
     STUB(
             HttpStatus.I_AM_A_TEAPOT,
             "ЭТО ЗАГЛУШКА ПОКА НЕТ НОРМАЛЬНОГО СТАТУСА"
+    ),
+
+    CREATOR_CANNOT_LEAVE(
+            HttpStatus.FORBIDDEN,
+            "Создатель не может покинуть мероприятие"
+    ),
+
+    EVENT_NOT_ACTIVE(
+            HttpStatus.FORBIDDEN,
+            "Мероприятие не активно"
     );
 
     private final HttpStatus statusCode;
