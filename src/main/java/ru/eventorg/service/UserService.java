@@ -35,12 +35,10 @@ public class UserService {
             boolean emailExists = tuple.getT2();
 
             if (loginExists) {
-                // TODO заменить заглушку
-                return Mono.error(new UserAlreadyExistsException(ErrorState.STUB));
+                return Mono.error(new UserAlreadyExistsException(ErrorState.USER_ALREADY_EXISTS));
             }
             if (emailExists) {
-                // TODO заменить заглушку
-                return Mono.error(new UserAlreadyExistsException(ErrorState.STUB));
+                return Mono.error(new UserAlreadyExistsException(ErrorState.USER_ALREADY_EXISTS));
             }
             return Mono.empty();
         });
