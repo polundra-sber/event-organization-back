@@ -57,7 +57,8 @@ public class PurchaseListController implements PurchaseListApi {
         PurchaseListItem item = new PurchaseListItem()
                 .purchaseId(purchaseWithUserDto.getPurchase().getPurchaseId())
                 .purchaseName(purchaseWithUserDto.getPurchase().getPurchaseName())
-                .purchaseDescription(purchaseWithUserDto.getPurchase().getPurchaseDescription());
+                .purchaseDescription(purchaseWithUserDto.getPurchase().getPurchaseDescription())
+                .responsibleLogin(purchaseWithUserDto.getPurchase().getResponsibleUser());
 
         if (purchaseWithUserDto.getResponsibleUser() != null) {
             item.responsibleLogin(purchaseWithUserDto.getResponsibleUser().getLogin());
