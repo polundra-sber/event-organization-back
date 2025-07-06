@@ -64,5 +64,12 @@ public class GlobalExceptionHandler {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
+
+    @ExceptionHandler(AlreadyHasResponsibleException.class)
+    public ResponseEntity<String> handleAlreadyHasResponsibleException(AlreadyHasResponsibleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
 }
 

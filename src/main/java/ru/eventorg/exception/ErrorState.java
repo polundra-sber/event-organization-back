@@ -54,6 +54,10 @@ public enum ErrorState {
     EVENT_NOT_ACTIVE(
             HttpStatus.FORBIDDEN,
             "Мероприятие не активно"
+    ),
+    PURCHASE_ALREADY_HAS_RESPONSIBLE(
+            HttpStatus.FORBIDDEN,
+            "Ответственный на покупку уже назначен"
     );
 
     private final HttpStatus statusCode;
