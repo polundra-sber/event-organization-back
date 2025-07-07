@@ -32,6 +32,11 @@ public enum ErrorState {
             "Покупка с указанным идентификатором не найдена"
 
     ),
+    STUFF_NOT_EXIST(
+            HttpStatus.NOT_FOUND,
+            "Вещь с указанным идентификатором не найдена"
+
+    ),
     NOT_CREATOR_ROLE(
             HttpStatus.FORBIDDEN,
             "Вы не являетесь создателем мероприятия"
@@ -58,6 +63,10 @@ public enum ErrorState {
     PURCHASE_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Ответственный на покупку уже назначен"
+    ),
+    STUFF_ALREADY_HAS_RESPONSIBLE(
+            HttpStatus.FORBIDDEN,
+            "Ответственный на вещь уже назначен"
     );
 
     private final HttpStatus statusCode;
