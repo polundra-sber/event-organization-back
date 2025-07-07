@@ -106,6 +106,11 @@ public class CostListController implements CostListApi {
     @Override
     public Mono<ResponseEntity<ReceiptList>> getReceiptsForPurchase(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
         return eventValidationService.validateExists(eventId)
+                .then(purchaseValidationService.purchaseExists(purchaseId))
+                .then(SecurityUtils.getCurrentUserLogin()
+                        .flatMap(login ->
+                                participantValidationService.validateIsParticipant(eventId, login)
+                                        .thenReturn(login)))
                 .thenMany(costListService.getReceiptResources(eventId, purchaseId))
                 .collectList()
                 .flatMap(resources -> {
@@ -114,7 +119,7 @@ public class CostListController implements CostListApi {
                                 // FIXME ok or not found
                                 .status(HttpStatus.NOT_FOUND)
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                                .body(new ReceiptList()));  // пустой список файлов
+                                .body(new ReceiptList()));
                     }
                     ReceiptList rl = new ReceiptList();
                     rl.setFiles(resources);
