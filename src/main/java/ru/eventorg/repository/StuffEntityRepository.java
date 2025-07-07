@@ -9,4 +9,5 @@ import ru.eventorg.entity.StuffEntity;
 public interface StuffEntityRepository extends R2dbcRepository<StuffEntity, Integer> {
     Mono<StuffEntity> findByStuffIdAndEventId(Integer stuffId, Integer eventId);
     Mono<Void> deleteByStuffIdAndEventId(Integer stuffId, Integer eventId);
+    Mono<StuffEntity> findByStuffIdAndEventIdAndResponsibleUser(Integer stuffId, Integer eventId, String responsibleUser);
 }

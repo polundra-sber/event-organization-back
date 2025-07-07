@@ -10,8 +10,8 @@ public class StuffWithUserDto {
     private UserProfileEntity responsibleUser;
 
     public StuffWithUserDto() {
-        this.stuff = new StuffEntity(); // Пустая покупка
-        this.responsibleUser = null; // Нет ответственного
+        this.stuff = new StuffEntity();
+        this.responsibleUser = null;
     }
 
     public StuffWithUserDto(StuffEntity stuff, UserProfileEntity responsibleUser) {
