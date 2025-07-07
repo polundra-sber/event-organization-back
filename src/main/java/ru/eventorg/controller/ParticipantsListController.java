@@ -20,6 +20,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.security.SecurityUtils;
+import ru.eventorg.service.ParticipantValidationService;
 import ru.eventorg.service.ParticipantsListService;
 import ru.eventorg.service.RoleService;
 import ru.eventorg.service.UserService;
@@ -33,6 +34,7 @@ public class ParticipantsListController implements ParticipantsListApi {
 
     private final ParticipantsListService participantsListService;
     private final RoleService roleService;
+    private final ParticipantValidationService participantValidationService;
 
     /**
      * POST /events/{event_id}/participants-list/add-participant : Добавить выбранных участников
@@ -62,19 +64,26 @@ public class ParticipantsListController implements ParticipantsListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<User>>> getEventParticipantsList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        Flux<User> result = participantsListService.getParticipantsById(eventId)
-                .map(fullUser -> {
-                    User dto = new User();
-                    dto.setLogin(fullUser.getLogin());
-                    dto.setRoleName(fullUser.getRoleName());
-                    dto.setEmail(fullUser.getEmail());
-                    dto.setName(fullUser.getName());
-                    dto.setSurname(fullUser.getSurname());
-                    dto.setCommentMoneyTransfer(fullUser.getCommentMoneyTransfer());
-                    return dto;
-                });
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(login ->
+                        participantValidationService.validateIsParticipant(eventId, login)
+                                .thenReturn(login)
+                )
+                .flatMap(validatedLogin -> {
+                    Flux<User> result = participantsListService.getParticipantsById(eventId)
+                            .map(fullUser -> {
+                                User dto = new User();
+                                dto.setLogin(fullUser.getLogin());
+                                dto.setRoleName(fullUser.getRoleName());
+                                dto.setEmail(fullUser.getEmail());
+                                dto.setName(fullUser.getName());
+                                dto.setSurname(fullUser.getSurname());
+                                dto.setCommentMoneyTransfer(fullUser.getCommentMoneyTransfer());
+                                return dto;
+                            });
 
-        return Mono.just(ResponseEntity.ok(result));
+                    return Mono.just(ResponseEntity.ok(result));
+                });
     }
 
     @Override
@@ -86,18 +95,26 @@ public class ParticipantsListController implements ParticipantsListApi {
             return Mono.just(ResponseEntity.ok(Flux.empty()));
         }
 
-        Flux<UserDemo> result = participantsListService.searchUsersByNameSurnameEmail(eventId, text, seq)
-                .map(fullUser -> {
-                    UserDemo dto = new UserDemo();
-                    dto.setLogin(fullUser.getLogin());
-                    dto.setEmail(fullUser.getEmail());
-                    dto.setName(fullUser.getName());
-                    dto.setSurname(fullUser.getSurname());
-                    return dto;
-                });
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(login ->
+                        participantValidationService.validateIsParticipant(eventId, login)
+                                .thenReturn(login)
+                )
+                .flatMap(validatedLogin -> {
+                    Flux<UserDemo> result = participantsListService
+                            .searchUsersByNameSurnameEmail(eventId, text, seq)
+                            .map(fullUser -> {
+                                UserDemo dto = new UserDemo();
+                                dto.setLogin(fullUser.getLogin());
+                                dto.setEmail(fullUser.getEmail());
+                                dto.setName(fullUser.getName());
+                                dto.setSurname(fullUser.getSurname());
+                                return dto;
+                            });
 
-        return result
-                .hasElements()
-                .map(hasElements -> ResponseEntity.ok(result));
+                    return result
+                            .hasElements()
+                            .map(hasElements -> ResponseEntity.ok(result));
+                });
     }
 }

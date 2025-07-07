@@ -2,6 +2,8 @@ package ru.eventorg.service;
 
 import io.r2dbc.spi.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.core.io.Resource;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -44,6 +46,7 @@ public class CostListService {
                 """;
 
         return eventValidationService.validateExists(eventId)
+                .then()
                 .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId)
                         .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
                 )
@@ -62,5 +65,9 @@ public class CostListService {
                             return user;
                         })
                         .all());
+    }
+
+    public Flux<Resource> getImageResource(Integer eventId) {
+
     }
 }
