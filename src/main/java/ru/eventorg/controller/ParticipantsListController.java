@@ -66,7 +66,7 @@ public class ParticipantsListController implements ParticipantsListApi {
                 .map(fullUser -> {
                     User dto = new User();
                     dto.setLogin(fullUser.getLogin());
-                    dto.setRoleId(fullUser.getRoleId());
+                    dto.setRoleName(fullUser.getRoleName());
                     dto.setEmail(fullUser.getEmail());
                     dto.setName(fullUser.getName());
                     dto.setSurname(fullUser.getSurname());
