@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 public class FullUser {
     private String login;
     @Nullable
-    private Integer roleId;
+    private String roleName;
     private String email;
     private String password;
     private String name;

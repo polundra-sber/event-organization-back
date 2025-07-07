@@ -33,7 +33,7 @@ public class ParticipantsListService {
         String sql = """
             SELECT
                 eul.user_id AS login,
-                eul.role_id AS role,
+                r.role_name AS role,
                 us.email       AS email,
                 us.password    AS password,
                 up.name        AS name,
@@ -42,6 +42,7 @@ public class ParticipantsListService {
             FROM event_user_list eul
             JOIN user_profile up ON up.login = eul.user_id
             JOIN user_secret  us ON us.login = eul.user_id
+            JOIN role r ON r.role_id = eul.role_id
             WHERE eul.event_id = $1
             """;
         return eventEntityRepository.existsEventEntityByEventId(eventId)
@@ -54,7 +55,7 @@ public class ParticipantsListService {
                             .bind(0, eventId)
                             .map((row, metadata) -> new FullUser(
                                     row.get("login", String.class),
-                                    row.get("role", Integer.class),
+                                    row.get("role", String.class),
                                     row.get("email", String.class),
                                     row.get("password", String.class),
                                     row.get("name", String.class),
@@ -82,7 +83,7 @@ public class ParticipantsListService {
                                     logins
                                             .flatMapMany(Flux::fromIterable)
                                             .flatMap(login ->
-                                                    eventUserListEntityRepository.existsByEventIdAndUserId(eventId, login)
+                                                    eventUserListEntityRepository.existsEventIdByEventIdAndUserId(eventId, login)
                                                             .flatMap(existsUserInEvent -> {
                                                                 log.info("login {} existsInEvent: {}", login, existsUserInEvent);
                                                                 if (existsUserInEvent) {
