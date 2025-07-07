@@ -67,6 +67,10 @@ public class RoleService {
     }
 
     public Mono<Void> validateIsParticipant(Integer eventId, String userLogin) {
+        if (userLogin == null) {
+            return Mono.empty();
+        }
+
         return getUserRoleInEvent(eventId, userLogin)
                 .flatMap(roleName -> {
                     if (UserRole.NOT_ALLOWED.getDisplayName().equals(roleName)) {
