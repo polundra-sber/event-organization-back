@@ -1627,21 +1627,21 @@ components:
         error:
           type: string
           description: Подробное описание ошибки
-          
+
     PurchaseNotExistResponse:
       type: object
       properties:
         error:
           type: string
           description: Подробное описание ошибки
-          
+
     StuffNotExistResponse:
       type: object
       properties:
         error:
           type: string
           description: Подробное описание ошибки
-          
+
     TaskNotExistResponse:
       type: object
       properties:
