@@ -19,8 +19,8 @@ public class MyStuffsListController implements MyStuffsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> denyStuffInMyStuffsList(Integer eventId, Integer stuffId, ServerWebExchange exchange) throws Exception {
-        return myStuffsListService.denyStuffInMyStuffsList(eventId, stuffId)
+    public Mono<ResponseEntity<Void>> denyStuffInMyStuffsList(Integer stuffId, ServerWebExchange exchange) throws Exception {
+        return myStuffsListService.denyStuffInMyStuffsList(stuffId)
                 .thenReturn(ResponseEntity.ok().build());
     }
 

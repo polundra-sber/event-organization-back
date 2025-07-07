@@ -34,7 +34,7 @@ public class MyStuffsListService {
     private static final String DENY_STUFF_SQL = """
     UPDATE stuff
     SET responsible_user = NULL
-    WHERE stuff_id = $1 AND event_id = $2 AND responsible_user = $3
+    WHERE stuff_id = $1 AND responsible_user = $2
     """;
 
     public MyStuffsListService(DatabaseClient databaseClient, EventService eventService, StuffEntityRepository stuffEntityRepository) {
@@ -55,23 +55,19 @@ public class MyStuffsListService {
                 );
     }
 
-    public Mono<Void> denyStuffInMyStuffsList(Integer eventId, Integer stuffId) {
+
+    public Mono<Void> denyStuffInMyStuffsList(Integer stuffId) {
         return getCurrentUserLogin()
                 .flatMap(userLogin ->
-                        eventService.validateExists(eventId)
-                                .then(eventService.validateEventIsActive(eventId))
-                                .then(stuffEntityRepository.findByStuffIdAndEventIdAndResponsibleUser(stuffId, eventId, userLogin)
+                                stuffEntityRepository.findByStuffIdAndResponsibleUser(stuffId, userLogin)
                                         .switchIfEmpty(Mono.error(new StuffNotExistException(ErrorState.STUFF_NOT_EXIST)))
                                         .flatMap(stuff ->
                                                 databaseClient.sql(DENY_STUFF_SQL)
                                                         .bind(0, stuffId)
-                                                        .bind(1, eventId)
-                                                        .bind(2, userLogin)
+                                                        .bind(1, userLogin)
                                                         .then()
                                         )
-                                )
-                );
-
+                                );
     }
 
 
