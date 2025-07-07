@@ -1,34 +1,19 @@
 package ru.eventorg.service;
 
-import io.r2dbc.spi.Parameter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.dto.FullUser;
-import ru.eventorg.dto.PurchaseWithUserDto;
-import ru.eventorg.entity.PurchaseEntity;
-import ru.eventorg.exception.ErrorState;
-import ru.eventorg.exception.PurchaseNotExistException;
-import ru.eventorg.repository.PayerEntityRepository;
-import ru.eventorg.repository.PurchaseEntityRepository;
 import ru.eventorg.repository.ReceiptListEntityRepository;
 
 @Service
 @RequiredArgsConstructor
 public class CostListService {
     private final ReceiptListEntityRepository receiptListEntityRepository;
-    private final EventValidationService eventValidationService;
-    private final PurchaseValidationService purchaseValidationService;
-    private final PayerEntityRepository payerEntityRepository;
-    private final PurchaseEntityRepository purchaseEntityRepository;
     private final R2dbcEntityTemplate template;
     private final ResourceLoader resourceLoader;
 

@@ -1,13 +1,7 @@
 package ru.eventorg.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +14,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.security.SecurityUtils;
-import ru.eventorg.service.ParticipantValidationService;
-import ru.eventorg.service.ParticipantsListService;
-import ru.eventorg.service.RoleService;
-import ru.eventorg.service.UserService;
+import ru.eventorg.service.*;
 
 import java.util.List;
 
@@ -35,6 +26,7 @@ public class ParticipantsListController implements ParticipantsListApi {
     private final ParticipantsListService participantsListService;
     private final RoleService roleService;
     private final ParticipantValidationService participantValidationService;
+    private final EventValidationService eventValidationService;
 
     /**
      * POST /events/{event_id}/participants-list/add-participant : Добавить выбранных участников
@@ -54,20 +46,26 @@ public class ParticipantsListController implements ParticipantsListApi {
             @Parameter(name = "event_id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("event_id") Integer eventId,
             @Valid @RequestBody Mono<List<String>> requestBody,
             @Parameter(hidden = true) final ServerWebExchange exchange) throws Exception {
-        return SecurityUtils.getCurrentUserLogin()
-                .flatMap(login ->
-                        roleService.checkIfCreator(eventId, login)
-                                .flatMap(isCreator -> participantsListService.addParticipantsToEvent(eventId, requestBody)
-                                        .then(Mono.just(ResponseEntity.ok().<Void>build())))
+        return eventValidationService.validateExists(eventId)
+                .then(SecurityUtils.getCurrentUserLogin()
+                        .flatMap(login ->
+                                roleService.checkIfCreator(eventId, login)
+                                        .flatMap(isCreator ->
+                                                participantsListService.addParticipantsToEvent(eventId, requestBody)
+                                                        .then(Mono.just(ResponseEntity.ok().<Void>build()))
+                                        )
+                        )
                 );
     }
 
     @Override
     public Mono<ResponseEntity<Flux<User>>> getEventParticipantsList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return SecurityUtils.getCurrentUserLogin()
-                .flatMap(login ->
-                        participantValidationService.validateIsParticipant(eventId, login)
-                                .thenReturn(login)
+        return eventValidationService.validateExists(eventId)
+                .then(SecurityUtils.getCurrentUserLogin()
+                        .flatMap(login ->
+                                participantValidationService.validateIsParticipant(eventId, login)
+                                        .thenReturn(login)
+                        )
                 )
                 .flatMap(validatedLogin -> {
                     Flux<User> result = participantsListService.getParticipantsById(eventId)
@@ -95,26 +93,27 @@ public class ParticipantsListController implements ParticipantsListApi {
             return Mono.just(ResponseEntity.ok(Flux.empty()));
         }
 
-        return SecurityUtils.getCurrentUserLogin()
-                .flatMap(login ->
-                        participantValidationService.validateIsParticipant(eventId, login)
-                                .thenReturn(login)
-                )
-                .flatMap(validatedLogin -> {
-                    Flux<UserDemo> result = participantsListService
-                            .searchUsersByNameSurnameEmail(eventId, text, seq)
-                            .map(fullUser -> {
-                                UserDemo dto = new UserDemo();
-                                dto.setLogin(fullUser.getLogin());
-                                dto.setEmail(fullUser.getEmail());
-                                dto.setName(fullUser.getName());
-                                dto.setSurname(fullUser.getSurname());
-                                return dto;
-                            });
+        return eventValidationService.validateExists(eventId)
+                .then(SecurityUtils.getCurrentUserLogin()
+                        .flatMap(login ->
+                                participantValidationService.validateIsParticipant(eventId, login)
+                                        .thenReturn(login)
+                        )
+                        .flatMap(validatedLogin -> {
+                            Flux<UserDemo> result = participantsListService
+                                    .searchUsersByNameSurnameEmail(eventId, text, seq)
+                                    .map(fullUser -> {
+                                        UserDemo dto = new UserDemo();
+                                        dto.setLogin(fullUser.getLogin());
+                                        dto.setEmail(fullUser.getEmail());
+                                        dto.setName(fullUser.getName());
+                                        dto.setSurname(fullUser.getSurname());
+                                        return dto;
+                                    });
 
-                    return result
-                            .hasElements()
-                            .map(hasElements -> ResponseEntity.ok(result));
-                });
+                            return result
+                                    .hasElements()
+                                    .map(hasElements -> ResponseEntity.ok(result));
+                        }));
     }
 }
