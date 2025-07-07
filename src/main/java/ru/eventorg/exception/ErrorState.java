@@ -62,7 +62,10 @@ public enum ErrorState {
             "Создатель не может покинуть мероприятие"
     ),
 
-
+    EMAIL_ALREADY_EXISTS(
+            HttpStatus.CONFLICT,
+            "Пользователь с таким email уже зарегистрирован"
+    ),
 
     EVENT_NOT_ACTIVE(
             HttpStatus.FORBIDDEN,
