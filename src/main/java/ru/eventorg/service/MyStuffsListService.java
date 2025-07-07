@@ -59,15 +59,18 @@ public class MyStuffsListService {
     public Mono<Void> denyStuffInMyStuffsList(Integer stuffId) {
         return getCurrentUserLogin()
                 .flatMap(userLogin ->
-                                stuffEntityRepository.findByStuffIdAndResponsibleUser(stuffId, userLogin)
-                                        .switchIfEmpty(Mono.error(new StuffNotExistException(ErrorState.STUFF_NOT_EXIST)))
-                                        .flatMap(stuff ->
-                                                databaseClient.sql(DENY_STUFF_SQL)
-                                                        .bind(0, stuffId)
-                                                        .bind(1, userLogin)
-                                                        .then()
-                                        )
-                                );
+                        stuffEntityRepository.findByStuffIdAndResponsibleUser(stuffId, userLogin)
+                                .switchIfEmpty(Mono.error(new StuffNotExistException(ErrorState.STUFF_NOT_EXIST)))
+                                .flatMap(stuff ->
+                                        eventService.validateEventIsActive(stuff.getEventId())
+                                                .then(
+                                                        databaseClient.sql(DENY_STUFF_SQL)
+                                                                .bind(0, stuffId)
+                                                                .bind(1, userLogin)
+                                                                .then()
+                                                )
+                                )
+                );
     }
 
 
