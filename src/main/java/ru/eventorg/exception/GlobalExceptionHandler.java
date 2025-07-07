@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(StuffNotExistException.class)
+    public ResponseEntity<String> handleStuffNotExistException(StuffNotExistException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
     @ExceptionHandler(UserNotEventParticipantException.class)
     public ResponseEntity<String> handleUserNotEventParticipantException(UserNotEventParticipantException ex) {
         String response = ex.getMessage();
