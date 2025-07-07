@@ -95,7 +95,7 @@ public class HomePageController implements HomePageApi {
         apiEvent.setEventStatusName(entity.getStatus());
         apiEvent.setLocation(entity.getLocation());
         apiEvent.setEventDate(entity.getEventDate());
-        apiEvent.setEventTime(entity.getEventTime().toString());
+        apiEvent.setEventTime(entity.getEventTime() != null ? entity.getEventTime().toString() : null);
         apiEvent.setChatLink(entity.getChatLink());
         apiEvent.setRoleName(entity.getRole());
         return apiEvent;
@@ -118,7 +118,7 @@ public class HomePageController implements HomePageApi {
         editor.setEventDescription(entity.getEventDescription());
         editor.setLocation(entity.getLocation());
         editor.setEventDate(entity.getEventDate());
-        editor.setEventTime(entity.getEventTime().toString());
+        editor.setEventTime(entity.getEventTime() != null ? entity.getEventTime().toString() : null);
         editor.setChatLink(entity.getChatLink());
         return editor;
     }
