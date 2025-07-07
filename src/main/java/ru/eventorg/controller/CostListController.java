@@ -78,7 +78,17 @@ public class CostListController implements CostListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<UserDemo>>> getParticipantsForPurchaseFromCostList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return CostListApi.super.getParticipantsForPurchaseFromCostList(eventId, purchaseId, exchange);
+        Flux<UserDemo> userDemoFlux = costListService.getPayersForPurchase(eventId, purchaseId)
+                .map(fullUser -> {
+                    UserDemo demo = new UserDemo();
+                    demo.setLogin(fullUser.getLogin());
+                    demo.setEmail(fullUser.getEmail());
+                    demo.setName(fullUser.getName());
+                    demo.setSurname(fullUser.getSurname());
+                    return demo;
+                });
+
+        return Mono.just(ResponseEntity.ok(userDemoFlux));
     }
 
     @Override
