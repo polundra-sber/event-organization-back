@@ -51,10 +51,18 @@ public enum ErrorState {
             "ЭТО ЗАГЛУШКА ПОКА НЕТ НОРМАЛЬНОГО СТАТУСА"
     ),
 
+    TASK_NOT_EXIST(
+            HttpStatus.NOT_FOUND,
+            "Задача с указанным идентификатором не найдена"
+
+    ),
+
     CREATOR_CANNOT_LEAVE(
             HttpStatus.FORBIDDEN,
             "Создатель не может покинуть мероприятие"
     ),
+
+
 
     EVENT_NOT_ACTIVE(
             HttpStatus.FORBIDDEN,

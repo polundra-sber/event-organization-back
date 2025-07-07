@@ -59,6 +59,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<String> handleTaskNotFoundException(TaskNotFoundException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
     public ResponseEntity<String> handleUserAlreadyParticipantException(UserAlreadyParticipantException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
