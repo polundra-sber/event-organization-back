@@ -37,7 +37,7 @@ paths:
   /events/{event_id}/user-metadata:
     get:
       tags:
-       - User metadata
+        - User metadata
       operationId: getUserMetadata
       summary: Получить роль пользователя в данном мероприятии и статус мероприятия
       parameters:
@@ -91,7 +91,7 @@ paths:
   /auth/login:
     post:
       tags:
-       - Authentication
+        - Authentication
       operationId: login
       security: []  # отключает аутентификацию для этого endpoint'а
       summary: Авторизация пользователя
@@ -1014,24 +1014,24 @@ paths:
           content:
             application/json:
               schema:
-                  type: object
-                  properties:
-                    event_date:
-                      type: string
-                      format: date
-                      description: Дата проведения мероприятия
-                    event_time:
-                      type: string
-                      format: time
-                      example: 16:00
-                      description: Время проведения мероприятия
-                    tasks:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/TaskListItem'
-                  required:
-                    - event_date
-                    - tasks
+                type: object
+                properties:
+                  event_date:
+                    type: string
+                    format: date
+                    description: Дата проведения мероприятия
+                  event_time:
+                    type: string
+                    format: time
+                    example: 16:00
+                    description: Время проведения мероприятия
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskListItem'
+                required:
+                  - event_date
+                  - tasks
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:
@@ -1451,7 +1451,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventNotExistResponse'
-  
+
   /events/{event_id}/my-tasks-list/{task_id}/deny-task:
     delete:
       tags:
@@ -1478,7 +1478,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventNotExistResponse'
-                    
+
 
 
   /events/{event_id}/my-tasks-list/{task_id}/mark-task-completed:
@@ -1508,7 +1508,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EventNotExistResponse'
 
-  
+
   # my stuffs list
   /events/my-stuffs-list:
     get:
@@ -1660,7 +1660,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventNotExistResponse'
-  
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1786,7 +1786,7 @@ components:
         role_name:
           type: string
           example: "участник"
-    
+
     EventPreview:
       type: object
       required:
@@ -1861,7 +1861,7 @@ components:
           example: "https://t.me/chat_id"
           default: "не прикреплена"
 
-   # Пользователь
+    # Пользователь
     EventUserMetadata:
       type: object
       properties:
@@ -2174,7 +2174,7 @@ components:
           type: number
           format: float
           example: 123.99
-        hasReceipt: 
+        hasReceipt:
           type: boolean
       required:
         - purchase_id
@@ -2366,59 +2366,63 @@ components:
         - event_name
         - deadline_date
         - task_status_name
-    
+
     MyStuffListItem:
-      event_id:
-        type: integer
-      event_name:
-        type: string
-        minLength: 1
-        maxLength: 50
-        example: Шашлыки
-      stuff_id:
-        type: integer
-      stuff_name:
-        type: string
-        minLength: 1
-        maxLength: 50
-        example: Веревка
-      stuff_description:
-        type: string
-        maxLength: 254
-        example: 5 метров, канатная
-        default: "Описание не добавлено"
+      type: object
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        stuff_id:
+          type: integer
+        stuff_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Веревка
+        stuff_description:
+          type: string
+          maxLength: 254
+          example: 5 метров, канатная
+          default: "Описание не добавлено"
       required:
         - event_id
         - event_name
         - stuff_id
         - stuff_name
-    
+
     MyDebtListItem:
-      event_id:
-        type: integer
-      event_name:
-        type: string
-        minLength: 1
-        maxLength: 50
-        example: Шашлыки
-      debt_id:
-        type: integer
-      recipient_login:
-        type: string
-      recipient_name:
-        type: string
-      recipient_surname:
-        type: string
-      comment_money_transfer:
-        type: string
-      debt_status_name:
-        type: string
-        default: не оплачен
-      debt_amount:
-        type: number
-        format: float
-        minimum: 0
-        example: 123.50
+      type: object
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        debt_id:
+          type: integer
+        recipient_login:
+          type: string
+        recipient_name:
+          type: string
+        recipient_surname:
+          type: string
+        comment_money_transfer:
+          type: string
+        debt_status_name:
+          type: string
+          default: не оплачен
+        debt_amount:
+          type: number
+          format: float
+          minimum: 0
+          example: 123.50
       required:
         - event_id
         - event_name
@@ -2430,29 +2434,31 @@ components:
         - debt_amount
 
     MyIncomeListItem:
-      event_id:
-        type: integer
-      event_name:
-        type: string
-        minLength: 1
-        maxLength: 50
-        example: Шашлыки
-      debt_id:
-        type: integer
-      payer_login:
-        type: string
-      payer_name:
-        type: string
-      payer_surname:
-        type: string
-      debt_status_name:
-        type: string
-        default: не оплачен
-      debt_amount:
-        type: number
-        format: float
-        minimum: 0
-        example: 123.50
+      type: object
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Шашлыки
+        debt_id:
+          type: integer
+        payer_login:
+          type: string
+        payer_name:
+          type: string
+        payer_surname:
+          type: string
+        debt_status_name:
+          type: string
+          default: не оплачен
+        debt_amount:
+          type: number
+          format: float
+          minimum: 0
+          example: 123.50
       required:
         - event_id
         - event_name
