@@ -26,6 +26,7 @@ import ru.eventorg.repository.ReceiptListEntityRepository;
 public class CostListService {
     private final ReceiptListEntityRepository receiptListEntityRepository;
     private final EventValidationService eventValidationService;
+    private final PurchaseValidationService purchaseValidationService;
     private final PayerEntityRepository payerEntityRepository;
     private final PurchaseEntityRepository purchaseEntityRepository;
     private final R2dbcEntityTemplate template;
@@ -35,7 +36,7 @@ public class CostListService {
         return receiptListEntityRepository.existsReceiptListEntityByPurchaseId(purchaseId);
     }
 
-    public Flux<FullUser> getPayersForPurchase(Integer eventId, Integer purchaseId) {
+    public Flux<FullUser> getPayersForPurchase(Integer purchaseId) {
         String sqlGetPayers = """
                 SELECT
                     up.login       AS login,
@@ -50,26 +51,21 @@ public class CostListService {
                 WHERE p.purchase_id = $1
                 """;
 
-        return eventValidationService.validateExists(eventId)
-                .then()
-                .then(purchaseEntityRepository.findByPurchaseIdAndEventId(purchaseId, eventId)
-                        .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
-                )
-                .thenMany(template.getDatabaseClient()
-                        .sql(sqlGetPayers)
-                        .bind(0, purchaseId)
-                        .map((row, meta) -> {
-                            FullUser user = new FullUser();
-                            user.setLogin(row.get("login", String.class));
-                            user.setEmail(row.get("email", String.class));
-                            user.setPassword(row.get("password", String.class));
-                            user.setName(row.get("name", String.class));
-                            user.setSurname(row.get("surname", String.class));
-                            user.setCommentMoneyTransfer(row.get("commentMoneyTransfer", String.class));
-                            user.setRoleName(null); // роль не используется
-                            return user;
-                        })
-                        .all());
+        return template.getDatabaseClient()
+                .sql(sqlGetPayers)
+                .bind(0, purchaseId)
+                .map((row, meta) -> {
+                    FullUser user = new FullUser();
+                    user.setLogin(row.get("login", String.class));
+                    user.setEmail(row.get("email", String.class));
+                    user.setPassword(row.get("password", String.class));
+                    user.setName(row.get("name", String.class));
+                    user.setSurname(row.get("surname", String.class));
+                    user.setCommentMoneyTransfer(row.get("commentMoneyTransfer", String.class));
+                    user.setRoleName(null); // роль не используется
+                    return user;
+                })
+                .all();
     }
 
     public Flux<String> getImagePathsByPurchaseId(Integer purchaseId) {

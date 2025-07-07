@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import ru.eventorg.dto.PurchaseWithUserDto;
 import ru.eventorg.entity.PurchaseEntity;
 import ru.eventorg.entity.UserProfileEntity;
+import ru.eventorg.security.SecurityUtils;
 import ru.eventorg.service.*;
 
 import java.util.Collections;
@@ -28,6 +29,8 @@ public class CostListController implements CostListApi {
     private final PurchaseListService purchaseListService;
     private final EventService eventService;
     private final EventValidationService eventValidationService;
+    private final PurchaseValidationService purchaseValidationService;
+    private final ParticipantValidationService participantValidationService;
 
     @Override
     public Mono<ResponseEntity<GetCostList200Response>> getCostList(Integer eventId, ServerWebExchange exchange) throws Exception {
@@ -78,17 +81,21 @@ public class CostListController implements CostListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<UserDemo>>> getParticipantsForPurchaseFromCostList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        Flux<UserDemo> userDemoFlux = costListService.getPayersForPurchase(eventId, purchaseId)
-                .map(fullUser -> {
+        return eventValidationService.validateExists(eventId)
+                .then(purchaseValidationService.purchaseExists(purchaseId))
+                .then(SecurityUtils.getCurrentUserLogin()
+                        .flatMap(login -> participantValidationService.validateIsParticipant(eventId, login)
+                                .thenReturn(login)))
+                .thenReturn(costListService.getPayersForPurchase(purchaseId))
+                .map(flux -> flux.map(fullUser -> {
                     UserDemo demo = new UserDemo();
                     demo.setLogin(fullUser.getLogin());
                     demo.setEmail(fullUser.getEmail());
                     demo.setName(fullUser.getName());
                     demo.setSurname(fullUser.getSurname());
                     return demo;
-                });
-
-        return Mono.just(ResponseEntity.ok(userDemoFlux));
+                }))
+                .map(ResponseEntity::ok);
     }
 
     @Override
