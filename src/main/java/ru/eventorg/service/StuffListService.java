@@ -79,7 +79,7 @@ public class StuffListService {
                                                 .all()
                                                 .flatMap(this::mapRowToStuffWithUserDto)
                                 )
-                                .switchIfEmpty(Flux.just(new StuffWithUserDto()))
+                                .switchIfEmpty(Flux.empty())
                 );
     }
 
