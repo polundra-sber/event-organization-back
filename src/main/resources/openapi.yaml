@@ -492,6 +492,11 @@ paths:
           required: true
           schema:
             type: integer
+        - in: path
+          name: participant_login
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
