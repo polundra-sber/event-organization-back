@@ -2046,8 +2046,6 @@ components:
           maxLength: 254
           example: Торт без орехов и без апельсина
           default: "Описание не добавлено"
-        task_status_name:
-          type: string
         responsible_login:
           type: string
         deadline_date:
@@ -2074,8 +2072,6 @@ components:
           maxLength: 254
           example: Торт без орехов и без апельсина
           default: "Описание не добавлено"
-        task_status_name:
-          type: string
         responsible_login:
           type: string
         deadline_date:
