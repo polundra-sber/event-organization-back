@@ -210,7 +210,7 @@ public class HomePageService {
         eventEntity.setEventDescription(event.getEventDescription());
         eventEntity.setLocation(event.getLocation());
         eventEntity.setEventDate(event.getEventDate());
-        eventEntity.setEventTime(LocalTime.parse(event.getEventTime()));
+        eventEntity.setEventTime(event.getEventTime() != null ? LocalTime.parse(event.getEventTime()): null);
         eventEntity.setChatLink(event.getChatLink());
         return eventEntity;
     }
@@ -257,7 +257,7 @@ public class HomePageService {
         event.setEventDescription(editor.getEventDescription());
         event.setLocation(editor.getLocation());
         event.setEventDate(editor.getEventDate());
-        event.setEventTime(LocalTime.parse(editor.getEventTime()));
+        event.setEventTime(editor.getEventTime() != null ? LocalTime.parse(editor.getEventTime()) : null);
         event.setChatLink(editor.getChatLink());
         return event;
     }
