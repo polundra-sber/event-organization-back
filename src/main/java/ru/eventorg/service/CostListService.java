@@ -4,6 +4,10 @@ import io.r2dbc.spi.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -25,6 +29,7 @@ public class CostListService {
     private final PayerEntityRepository payerEntityRepository;
     private final PurchaseEntityRepository purchaseEntityRepository;
     private final R2dbcEntityTemplate template;
+    private final ResourceLoader resourceLoader;
 
     public Mono<Boolean> hasReceipt(Integer purchaseId) {
         return receiptListEntityRepository.existsReceiptListEntityByPurchaseId(purchaseId);
@@ -67,7 +72,24 @@ public class CostListService {
                         .all());
     }
 
-    public Flux<Resource> getImageResource(Integer eventId) {
+    public Flux<String> getImagePathsByPurchaseId(Integer purchaseId) {
+        String sqlGetImagePath = """
+                SELECT
+                    r.file_path AS file_path
+                FROM receipt_list rl
+                JOIN receipt r ON r.receipt_id = rl.receipt_id
+                WHERE rl.purchase_id = $1
+                """;
 
+        return template.getDatabaseClient()
+                .sql(sqlGetImagePath)
+                .bind(0, purchaseId)
+                .map((row, meta) -> row.get("file_path", String.class))
+                .all();
+    }
+
+    public Flux<Resource> getReceiptResources(Integer eventId, Integer purchaseId) {
+        return getImagePathsByPurchaseId(purchaseId)
+                .map(path -> resourceLoader.getResource("file:" + path));
     }
 }

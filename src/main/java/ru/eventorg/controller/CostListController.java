@@ -6,6 +6,8 @@ import org.openapitools.model.CostAllocationListItem;
 import org.openapitools.model.GetCostList200Response;
 import org.openapitools.model.ReceiptList;
 import org.openapitools.model.UserDemo;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -14,10 +16,7 @@ import reactor.core.publisher.Mono;
 import ru.eventorg.dto.PurchaseWithUserDto;
 import ru.eventorg.entity.PurchaseEntity;
 import ru.eventorg.entity.UserProfileEntity;
-import ru.eventorg.service.CostListService;
-import ru.eventorg.service.EventService;
-import ru.eventorg.service.PurchaseListService;
-import ru.eventorg.service.UserService;
+import ru.eventorg.service.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +27,7 @@ public class CostListController implements CostListApi {
     private final CostListService costListService;
     private final PurchaseListService purchaseListService;
     private final EventService eventService;
+    private final EventValidationService eventValidationService;
 
     @Override
     public Mono<ResponseEntity<GetCostList200Response>> getCostList(Integer eventId, ServerWebExchange exchange) throws Exception {
@@ -98,6 +98,23 @@ public class CostListController implements CostListApi {
 
     @Override
     public Mono<ResponseEntity<ReceiptList>> getReceiptsForPurchase(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return CostListApi.super.getReceiptsForPurchase(eventId, purchaseId, exchange);
+        return eventValidationService.validateExists(eventId)
+                .thenMany(costListService.getReceiptResources(eventId, purchaseId))
+                .collectList()
+                .flatMap(resources -> {
+                    if (resources.isEmpty()) {
+                        return Mono.just(ResponseEntity
+                                // FIXME ok or not found
+                                .status(HttpStatus.NOT_FOUND)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .body(new ReceiptList()));  // пустой список файлов
+                    }
+                    ReceiptList rl = new ReceiptList();
+                    rl.setFiles(resources);
+                    return Mono.just(ResponseEntity
+                            .ok()
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                            .body(rl));
+                });
     }
 }
