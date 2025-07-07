@@ -4,7 +4,6 @@ import org.openapitools.api.PurchaseListApi;
 import org.openapitools.model.PurchaseListItem;
 import org.openapitools.model.PurchaseListItemCreator;
 import org.openapitools.model.PurchaseListItemEditor;
-import org.openapitools.model.PurchaseListItemResponsible;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,19 +58,20 @@ public class PurchaseListController implements PurchaseListApi {
                 .purchaseId(purchaseWithUserDto.getPurchase().getPurchaseId())
                 .purchaseName(purchaseWithUserDto.getPurchase().getPurchaseName())
                 .purchaseDescription(purchaseWithUserDto.getPurchase().getPurchaseDescription())
-                .responsibleUser(purchaseWithUserDto.getPurchase().getResponsibleUser());
+                .responsibleLogin(purchaseWithUserDto.getPurchase().getResponsibleUser());
 
         if (purchaseWithUserDto.getResponsibleUser() != null) {
-            item.responsibleUser(purchaseWithUserDto.getResponsibleUser().getName()+ " " +purchaseWithUserDto.getResponsibleUser().getSurname());
+            item.responsibleLogin(purchaseWithUserDto.getResponsibleUser().getLogin());
+            item.responsibleName(purchaseWithUserDto.getResponsibleUser().getName());
+            item.responsibleSurname(purchaseWithUserDto.getResponsibleUser().getSurname());
         }
         return item;
     }
 
     @Override
-    public Mono<ResponseEntity<PurchaseListItemResponsible>> takePurchaseFromPurchasesList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
+    public Mono<ResponseEntity<PurchaseListItem>> takePurchaseFromPurchasesList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
         return purchaseListService.takePurchaseFromPurchasesList(eventId, purchaseId)
                 .map(this::convertPurchaseWithUserDtoToPurchaseListItem)
                 .map(ResponseEntity::ok);
-
     }
 }
