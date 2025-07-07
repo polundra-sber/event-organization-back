@@ -54,7 +54,6 @@ public enum ErrorState {
     TASK_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Задача с указанным идентификатором не найдена"
-
     ),
 
     CREATOR_CANNOT_LEAVE(
@@ -74,6 +73,16 @@ public enum ErrorState {
     PURCHASE_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Ответственный на покупку уже назначен"
+    ),
+
+    NOT_RESPONSIBLE(
+            HttpStatus.FORBIDDEN,
+            "Вы не являетесь ответственным"
+    ),
+
+    TASK_ALREADY_COMPLETED(
+            HttpStatus.FORBIDDEN,
+            "Нельзя отказаться от выполненной задачи"
     ),
     STUFF_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
