@@ -64,7 +64,7 @@ public class PurchaseListService {
                                                 .all()
                                                 .flatMap(this::mapRowToPurchaseWithUserDto)
                                 )
-                                .switchIfEmpty(Flux.just(new PurchaseWithUserDto()))
+                                .switchIfEmpty(Flux.empty())
                 );
     }
 

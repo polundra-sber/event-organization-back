@@ -20,6 +20,6 @@ public class DebtEntity {
     private String payerId;
     private String recipientId;
     private Integer statusId;
-    private BigDecimal debtAmount;
+    private Float debtAmount;
     private Integer eventId;
 }

@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(StuffNotExistException.class)
+    public ResponseEntity<String> handleStuffNotExistException(StuffNotExistException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
     @ExceptionHandler(UserNotEventParticipantException.class)
     public ResponseEntity<String> handleUserNotEventParticipantException(UserNotEventParticipantException ex) {
         String response = ex.getMessage();
@@ -49,6 +55,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(WrongUserRoleException.class)
     public ResponseEntity<String> handleWrongUserRoleException(WrongUserRoleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<String> handleTaskNotFoundException(TaskNotFoundException ex) {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
@@ -67,6 +79,42 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AlreadyHasResponsibleException.class)
     public ResponseEntity<String> handleAlreadyHasResponsibleException(AlreadyHasResponsibleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<String> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(NotResponsibleException.class)
+    public ResponseEntity<String> handleNotResponsibleException(NotResponsibleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(TaskAlreadyCompletedException.class)
+    public ResponseEntity<String> handleTaskAlreadyCompletedException(TaskAlreadyCompletedException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(DebtNotExistsException.class)
+    public ResponseEntity<String> handleDebtNotExistsException(DebtNotExistsException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(UserNotRecipientException.class)
+    public ResponseEntity<String> handleUserNotRecipientException(UserNotRecipientException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(UserNotPayerException.class)
+    public ResponseEntity<String> handleUserNotPayerException(UserNotPayerException ex) {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
