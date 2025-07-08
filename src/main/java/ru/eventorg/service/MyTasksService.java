@@ -23,7 +23,7 @@ public class MyTasksService {
     private final EventEntityRepository eventEntityRepository;
     private final TaskEntityRepository taskRepository;
 
-    // Получение списка задач (исправленная версия)
+
     public Flux<MyTaskListItemCustom> getMyTasksListCustom() {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMapMany(login -> {
@@ -45,8 +45,8 @@ public class MyTasksService {
 
                     return template.getDatabaseClient()
                             .sql(query)
-                            .bind("login", login)  // Исправлено название параметра
-                            .map(this::mapRowToTaskItem)  // Переименовано для ясности
+                            .bind("login", login)
+                            .map(this::mapRowToTaskItem)
                             .all();
                 });
     }
@@ -64,7 +64,7 @@ public class MyTasksService {
         );
     }
 
-    // Отказ от задачи
+
     public Mono<Void> denyTask(Integer taskId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(login -> validateTaskExists(taskId)
@@ -76,7 +76,7 @@ public class MyTasksService {
                 );
     }
 
-    // Отметка задачи как выполненной
+
     public Mono<Void> completeTask(Integer taskId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(login -> validateTaskExists(taskId)
@@ -87,7 +87,7 @@ public class MyTasksService {
                 );
     }
 
-    // Валидация что задача существует
+
     private Mono<Void> validateTaskExists(Integer taskId) {
         return taskRepository.existsById(taskId)
                 .flatMap(exists -> exists
@@ -95,7 +95,7 @@ public class MyTasksService {
                         : Mono.error(new TaskNotFoundException(ErrorState.TASK_NOT_EXIST)));
     }
 
-    // Валидация что пользователь ответственный за задачу
+
     private Mono<Void> validateTaskResponsibleUser(Integer taskId, String username) {
         return taskRepository.isUserResponsible(taskId, username)
                 .flatMap(isResponsible -> isResponsible
@@ -103,7 +103,7 @@ public class MyTasksService {
                         : Mono.error(new NotResponsibleException(ErrorState.NOT_RESPONSIBLE)));
     }
 
-    // Валидация что мероприятие активно (для задачи)
+
     private Mono<Void> validateEventIsActiveForTask(Integer taskId) {
         return taskRepository.findEventIdByTaskId(taskId)
                 .flatMap(eventEntityRepository::existsActiveEventById)
@@ -115,7 +115,7 @@ public class MyTasksService {
     private Mono<Void> validateTaskNotCompleted(Integer taskId) {
         return taskRepository.findTaskStatusById(taskId)
                 .flatMap(status -> {
-                    if (status == 1) { // Предполагаем, что 1 - это статус "выполнено"
+                    if (status == 1) {
                         return Mono.error(new TaskAlreadyCompletedException(ErrorState.TASK_ALREADY_COMPLETED));
                     }
                     return Mono.empty();
