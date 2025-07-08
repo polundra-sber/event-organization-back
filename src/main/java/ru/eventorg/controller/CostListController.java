@@ -152,6 +152,7 @@ public class CostListController implements CostListApi {
                                         participantValidationService.validateIsParticipant(eventId, login)
                                                 .thenReturn(login)
                                 )
+                )
                 .thenMany(costListService.getReceiptResources(eventId, purchaseId))
                 .collectList()
                 .flatMap(resources -> {
