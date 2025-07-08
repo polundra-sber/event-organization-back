@@ -480,12 +480,13 @@ paths:
           description: Неверные параметры запроса
         '404':
           description: Пользователь не найден
-    post:
+
+  /events/{event_id}/participants-list/{participant_login}/change-participant-role:
+    patch:
       tags:
-        - Ignored
         - Participants list
-      operationId: addParticipants
-      summary: Добавить выбранных участников
+      operationId: changParticipantRole
+      summary: Изменить роль на организатора/участника
       parameters:
         - in: path
           name: event_id
@@ -497,19 +498,21 @@ paths:
           required: true
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddParticipantsRequest'
       responses:
         '200':
-          description: Участники успешно добавлены
-        '400':
-          description: Неверный формат данных или некорректные логины
+          description: Новая роль участника
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    example: "организатор"
+        '403':
+          description: Недостаточно прав для изменения роли
         '404':
-          description: Событие не найдено
+          description: Пользователь не найден
 
   # purchases list
   /events/{event_id}/purchases-list:
@@ -2131,6 +2134,9 @@ components:
           example: 123.99
         hasReceipt:
           type: boolean
+        countParticipants:
+          type: integer
+          example: 2
       required:
         - purchase_id
         - purchase_name
