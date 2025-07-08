@@ -75,7 +75,7 @@ public class MyIncomesService {
         return debtEntityRepository.existsById(debtId)
                 .flatMap(exists -> exists
                         ? Mono.empty()
-                        : Mono.error(new TaskNotFoundException(ErrorState.DEBT_NOT_EXIST)));
+                        : Mono.error(new DebtNotExistsException(ErrorState.DEBT_NOT_EXIST)));
     }
 
 
@@ -83,7 +83,7 @@ public class MyIncomesService {
         return debtEntityRepository.isUserRecipient(debtId, username)
                 .flatMap(isResponsible -> isResponsible
                         ? Mono.empty()
-                        : Mono.error(new NotResponsibleException(ErrorState.NOT_RECIPIENT)));
+                        : Mono.error(new UserNotRecipientException(ErrorState.NOT_RECIPIENT)));
     }
 
 
