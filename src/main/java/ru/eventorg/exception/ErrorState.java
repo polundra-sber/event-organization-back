@@ -99,6 +99,11 @@ public enum ErrorState {
             "Вы не являетесь получателем средств"
     ),
 
+    NOT_PAYER(
+            HttpStatus.FORBIDDEN,
+            "Вы не являетесь плательщиком этого долга"
+    ),
+
     DEBT_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Долг с указанным идентификатором не найден"

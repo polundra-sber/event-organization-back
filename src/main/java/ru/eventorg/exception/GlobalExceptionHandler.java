@@ -113,5 +113,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(UserNotPayerException.class)
+    public ResponseEntity<String> handleUserNotPayerException(UserNotPayerException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
 }
 
