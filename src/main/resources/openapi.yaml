@@ -481,6 +481,39 @@ paths:
         '404':
           description: Пользователь не найден
 
+  /events/{event_id}/participants-list/{participant_login}/change-participant-role:
+    patch:
+      tags:
+        - Participants list
+      operationId: changParticipantRole
+      summary: Изменить роль на организатора/участника
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: participant_login
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Новая роль участника
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    example: "организатор"
+        '403':
+          description: Недостаточно прав для изменения роли
+        '404':
+          description: Пользователь не найден
+
   # purchases list
   /events/{event_id}/purchases-list:
     get:
@@ -2096,6 +2129,9 @@ components:
           example: 123.99
         hasReceipt:
           type: boolean
+        countParticipants:
+          type: integer
+          example: 2
       required:
         - purchase_id
         - purchase_name
