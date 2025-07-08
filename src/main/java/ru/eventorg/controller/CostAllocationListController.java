@@ -3,6 +3,7 @@ package ru.eventorg.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.openapitools.api.CostAllocationListApi;
 import org.openapitools.model.CostAllocationListItem;
 import org.openapitools.model.UserDemo;
@@ -12,14 +13,38 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.eventorg.dto.PurchaseWithUserDto;
+import ru.eventorg.entity.PurchaseEntity;
+import ru.eventorg.entity.UserProfileEntity;
+import ru.eventorg.security.SecurityUtils;
+import ru.eventorg.service.CostListService;
+import ru.eventorg.service.EventService;
+import ru.eventorg.service.PurchaseListService;
+import ru.eventorg.service.RoleService;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class CostAllocationListController implements CostAllocationListApi {
+    private final PurchaseListService purchaseListService;
+    private final EventService eventService;
+    private final CostListService costListService;
+    private final RoleService roleService;
+
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return CostAllocationListApi.super.getCostAllocationList(eventId, exchange);
+        Mono<Void> validateEvent = eventService.validateExists(eventId);
+
+        return validateEvent
+                .then(SecurityUtils.getCurrentUserLogin())
+                .flatMap(login ->
+                        roleService.checkIfCreator(eventId, login)
+                                .flatMap(isCreator -> purchaseListService.getPurchasesByEventId(eventId)
+                                        .flatMap(this::convertToCostAllocationItem)
+                                        .collectList()
+                                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                );
     }
 
     @Override
@@ -76,5 +101,26 @@ public class CostAllocationListController implements CostAllocationListApi {
             ServerWebExchange exchange
     ) {
         return Mono.empty();
+    }
+
+    private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto) {
+        PurchaseEntity purchase = dto.getPurchase();
+        UserProfileEntity user = dto.getResponsibleUser();
+
+        return costListService.hasReceipt(purchase.getPurchaseId())
+                .map(hasReceipt -> {
+                    CostAllocationListItem item = new CostAllocationListItem();
+                    item.setPurchaseId(purchase.getPurchaseId());
+                    item.setPurchaseName(purchase.getPurchaseName());
+                    item.setCost(purchase.getCost().floatValue());
+                    item.setHasReceipt(hasReceipt);
+
+                    if (user != null) {
+                        item.setResponsibleName(user.getName());
+                        item.setResponsibleSurname(user.getSurname());
+                    }
+
+                    return item;
+                });
     }
 }
