@@ -17,10 +17,7 @@ import ru.eventorg.dto.PurchaseWithUserDto;
 import ru.eventorg.entity.PurchaseEntity;
 import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.security.SecurityUtils;
-import ru.eventorg.service.CostListService;
-import ru.eventorg.service.EventService;
-import ru.eventorg.service.PurchaseListService;
-import ru.eventorg.service.RoleService;
+import ru.eventorg.service.*;
 
 import java.util.List;
 
@@ -31,6 +28,8 @@ public class CostAllocationListController implements CostAllocationListApi {
     private final EventService eventService;
     private final CostListService costListService;
     private final RoleService roleService;
+    private final EventService eventValidationService;
+    private final PurchaseValidationService purchaseValidationService;
 
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
@@ -49,7 +48,23 @@ public class CostAllocationListController implements CostAllocationListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<UserDemo>>> getParticipantsForPurchaseFromCostAllocationList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return CostAllocationListApi.super.getParticipantsForPurchaseFromCostAllocationList(eventId, purchaseId, exchange);
+        return eventValidationService.validateExists(eventId)
+                .then(SecurityUtils.getCurrentUserLogin())
+                .flatMap(login ->
+                        roleService.checkIfCreator(eventId, login)
+                                .then(purchaseValidationService.purchaseInEvent(purchaseId, eventId))
+                                .thenReturn(
+                                        costListService.getPayersForPurchase(purchaseId)
+                                                .map(fullUser -> {
+                                                    UserDemo demo = new UserDemo();
+                                                    demo.setLogin(fullUser.getLogin());
+                                                    demo.setEmail(fullUser.getEmail());
+                                                    demo.setName(fullUser.getName());
+                                                    demo.setSurname(fullUser.getSurname());
+                                                    return demo;
+                                                }))
+                                        .map(ResponseEntity::ok)
+                );
     }
 
     @Override
