@@ -14,7 +14,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.security.SecurityUtils;
-import ru.eventorg.service.*;
+import ru.eventorg.service.ParticipantsListService;
+import ru.eventorg.service.RoleService;
+import ru.eventorg.service.EventService;
 
 import java.util.List;
 
@@ -25,8 +27,7 @@ public class ParticipantsListController implements ParticipantsListApi {
 
     private final ParticipantsListService participantsListService;
     private final RoleService roleService;
-    private final ParticipantValidationService participantValidationService;
-    private final EventValidationService eventValidationService;
+    private final EventService eventValidationService;
 
     /**
      * POST /events/{event_id}/participants-list/add-participant : Добавить выбранных участников
@@ -63,7 +64,7 @@ public class ParticipantsListController implements ParticipantsListApi {
         return eventValidationService.validateExists(eventId)
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
-                                participantValidationService.validateIsParticipant(eventId, login)
+                                roleService.validateIsParticipant(eventId, login)
                                         .thenReturn(login)
                         )
                 )
@@ -96,7 +97,7 @@ public class ParticipantsListController implements ParticipantsListApi {
         return eventValidationService.validateExists(eventId)
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
-                                participantValidationService.validateIsParticipant(eventId, login)
+                                roleService.validateIsParticipant(eventId, login)
                                         .thenReturn(login)
                         )
                         .flatMap(validatedLogin -> {

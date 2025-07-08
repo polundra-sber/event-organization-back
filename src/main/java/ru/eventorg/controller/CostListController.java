@@ -33,9 +33,9 @@ public class CostListController implements CostListApi {
     private final CostListService costListService;
     private final PurchaseListService purchaseListService;
     private final EventService eventService;
-    private final EventValidationService eventValidationService;
+    private final EventService eventValidationService;
     private final PurchaseValidationService purchaseValidationService;
-    private final ParticipantValidationService participantValidationService;
+    private final RoleService roleService;
 
     @Override
     public Mono<ResponseEntity<GetCostList200Response>> getCostList(Integer eventId, ServerWebExchange exchange) throws Exception {
@@ -70,7 +70,7 @@ public class CostListController implements CostListApi {
         return eventValidationService.validateExists(eventId)
                 .then(purchaseValidationService.purchaseExists(purchaseId))
                 .then(SecurityUtils.getCurrentUserLogin()
-                        .flatMap(login -> participantValidationService.validateIsParticipant(eventId, login)
+                        .flatMap(login -> roleService.validateIsParticipant(eventId, login)
                                 .thenReturn(login)))
                 .thenReturn(costListService.getPayersForPurchase(purchaseId))
                 .map(flux -> flux.map(fullUser -> {
@@ -99,7 +99,7 @@ public class CostListController implements CostListApi {
                 .then(purchaseValidationService.purchaseExists(purchaseId))
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
-                                participantValidationService.validateIsParticipant(eventId, login)
+                                roleService.validateIsParticipant(eventId, login)
                                         .thenReturn(login)))
                 .thenMany(costListService.getReceiptResources(eventId, purchaseId))
                 .collectList()
@@ -134,7 +134,7 @@ public class CostListController implements CostListApi {
                 .then(
                         SecurityUtils.getCurrentUserLogin()
                                 .flatMap(login ->
-                                        participantValidationService.validateIsParticipant(eventId, login)
+                                        roleService.validateIsParticipant(eventId, login)
                                                 .thenReturn(login)
                                 )
                 )
