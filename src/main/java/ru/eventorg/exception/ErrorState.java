@@ -11,32 +11,39 @@ public enum ErrorState {
             HttpStatus.UNAUTHORIZED,
             "Пользователь указал неверный логин или пароль"
     ),
+
     EVENT_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Мероприятие с данным идентификатором не найдено"
     ),
+
     USER_ALREADY_EXISTS(
             HttpStatus.CONFLICT,
             "Пользователь уже зарегистрирован"
     ),
+
     USER_ALREADY_JOINED(
             HttpStatus.CONFLICT,
             "Вы уже присоединены к данному мероприятию"
     ),
+
     USER_NOT_EVENT_PARTICIPANT(
             HttpStatus.FORBIDDEN,
             "Пользователь не является участником мероприятия"
     ),
+
     PURCHASE_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Покупка с указанным идентификатором не найдена"
 
     ),
+
     STUFF_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Вещь с указанным идентификатором не найдена"
 
     ),
+
     NOT_CREATOR_ROLE(
             HttpStatus.FORBIDDEN,
             "Вы не являетесь создателем мероприятия"
@@ -46,6 +53,7 @@ public enum ErrorState {
             HttpStatus.FORBIDDEN,
             "Вы не являетесь организатором или создателем мероприятия"
     ),
+
     STUB(
             HttpStatus.I_AM_A_TEAPOT,
             "ЭТО ЗАГЛУШКА ПОКА НЕТ НОРМАЛЬНОГО СТАТУСА"
@@ -70,6 +78,7 @@ public enum ErrorState {
             HttpStatus.FORBIDDEN,
             "Мероприятие не активно"
     ),
+
     PURCHASE_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Ответственный на покупку уже назначен"
@@ -84,6 +93,17 @@ public enum ErrorState {
             HttpStatus.FORBIDDEN,
             "Нельзя отказаться от выполненной задачи"
     ),
+
+    NOT_RECIPIENT(
+            HttpStatus.FORBIDDEN,
+            "Вы не являетесь получателем средств"
+    ),
+
+    DEBT_NOT_EXIST(
+            HttpStatus.NOT_FOUND,
+            "Долг с указанным идентификатором не найден"
+    ),
+
     STUFF_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Ответственный на вещь уже назначен"

@@ -101,5 +101,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(DebtNotExistsException.class)
+    public ResponseEntity<String> handleDebtNotExistsException(DebtNotExistsException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(UserNotRecipientException.class)
+    public ResponseEntity<String> handleUserNotRecipientException(UserNotRecipientException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
 }
 
