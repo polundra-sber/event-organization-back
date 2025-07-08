@@ -32,7 +32,7 @@ public class PurchaseListService {
     private static final String GET_PURCHASES_SQL = """
         SELECT
             p.purchase_id, p.purchase_name, p.purchase_description,
-            p.responsible_user, p.event_id,
+            p.responsible_user, p.event_id, p.cost,
             up.login,
             up.name AS user_name,
             up.surname AS user_surname,
@@ -181,6 +181,10 @@ public class PurchaseListService {
         purchase.setPurchaseDescription((String) row.get("purchase_description"));
         purchase.setResponsibleUser((String) row.get("responsible_user"));
         purchase.setEventId((Integer) row.get("event_id"));
+
+        if (row.get("cost") != null) {
+            purchase.setCost((BigDecimal) row.get("cost"));
+        }
 
         UserProfileEntity user = null;
         if (row.get("login") != null) {

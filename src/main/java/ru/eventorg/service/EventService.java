@@ -65,4 +65,8 @@ public class EventService {
                         ? Mono.empty()
                         : Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE)));
     }
+
+    public Mono<Boolean> isCostAllocated(Integer eventId) {
+        return eventEntityRepository.isEventCostAllocated(eventId);
+    }
 }

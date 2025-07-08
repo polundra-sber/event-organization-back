@@ -24,4 +24,11 @@ public interface EventEntityRepository extends R2dbcRepository<EventEntity, Inte
     WHERE e.event_id = :eventId AND e.status_id = 1
     """)
     Mono<Boolean> existsActiveEventById(@Param("eventId") Integer eventId);
+
+    @Query("""
+    SELECT cost_allocated
+    FROM event
+    WHERE event_id = :eventId
+    """)
+    Mono<Boolean> isEventCostAllocated(@Param("eventId") Integer eventId);
 }
