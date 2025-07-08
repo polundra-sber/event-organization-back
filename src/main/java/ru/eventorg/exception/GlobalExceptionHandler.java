@@ -89,5 +89,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(NotResponsibleException.class)
+    public ResponseEntity<String> handleNotResponsibleException(NotResponsibleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(TaskAlreadyCompletedException.class)
+    public ResponseEntity<String> handleTaskAlreadyCompletedException(TaskAlreadyCompletedException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
 }
 
