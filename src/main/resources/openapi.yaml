@@ -480,36 +480,6 @@ paths:
           description: Неверные параметры запроса
         '404':
           description: Пользователь не найден
-    post:
-      tags:
-        - Ignored
-        - Participants list
-      operationId: addParticipants
-      summary: Добавить выбранных участников
-      parameters:
-        - in: path
-          name: event_id
-          required: true
-          schema:
-            type: integer
-        - in: path
-          name: participant_login
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddParticipantsRequest'
-      responses:
-        '200':
-          description: Участники успешно добавлены
-        '400':
-          description: Неверный формат данных или некорректные логины
-        '404':
-          description: Событие не найдено
 
   # purchases list
   /events/{event_id}/purchases-list:
