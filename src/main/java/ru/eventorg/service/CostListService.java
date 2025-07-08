@@ -8,7 +8,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.dto.FullUser;
+import ru.eventorg.dto.PurchaseWithUserDto;
+import ru.eventorg.entity.PurchaseEntity;
+import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.repository.ReceiptListEntityRepository;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -72,5 +77,49 @@ public class CostListService {
     public Flux<Resource> getReceiptResources(Integer eventId, Integer purchaseId) {
         return getImagePathsByPurchaseId(purchaseId)
                 .map(path -> resourceLoader.getResource("file:" + path));
+    }
+
+    public Flux<PurchaseWithUserDto> getPurchasesForUser(Integer eventId, String userLogin) {
+        String sqlPurchasesForUser = """
+                    SELECT
+                        p.purchase_id           AS purchase_id,
+                        p.purchase_name         AS purchase_name,
+                        p.purchase_description  AS purchase_description,
+                        p.cost                  AS cost,
+                        p.responsible_user      AS responsible_user,
+                        p.event_id              AS event_id,
+                        up.login                AS login,
+                        up.name                 AS name,
+                        up.surname              AS surname,
+                        up.comment_money_transfer AS commentMoneyTransfer
+                    FROM payer
+                    JOIN purchase p ON payer.purchase_id = p.purchase_id
+                    JOIN user_profile up ON payer.user_id = up.login
+                    WHERE payer.user_id = $1 AND p.event_id = $2
+                    """;
+        return template.getDatabaseClient()
+                .sql(sqlPurchasesForUser)
+                .bind(0, userLogin)
+                .bind(1, eventId)
+                .map((row, meta) -> {
+                    PurchaseEntity purchase = new PurchaseEntity(
+                            row.get("purchase_id", Integer.class),
+                            row.get("purchase_name", String.class),
+                            row.get("purchase_description", String.class),
+                            row.get("cost", BigDecimal.class),
+                            row.get("responsible_user", String.class),
+                            row.get("event_id", Integer.class)
+                    );
+
+                    UserProfileEntity user = new UserProfileEntity(
+                            row.get("login", String.class),
+                            row.get("name", String.class),
+                            row.get("surname", String.class),
+                            row.get("commentMoneyTransfer", String.class)
+                    );
+
+                    return new PurchaseWithUserDto(purchase, user);
+                })
+                .all();
     }
 }

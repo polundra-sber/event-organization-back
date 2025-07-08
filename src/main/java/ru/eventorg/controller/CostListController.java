@@ -56,26 +56,7 @@ public class CostListController implements CostListApi {
                     }
 
                     return Flux.fromIterable(purchases)
-                            .flatMap(dto -> {
-                                PurchaseEntity purchase = dto.getPurchase();
-                                UserProfileEntity user = dto.getResponsibleUser();
-
-                                return costListService.hasReceipt(purchase.getPurchaseId())
-                                        .map(hasReceipt -> {
-                                            CostAllocationListItem item = new CostAllocationListItem();
-                                            item.setPurchaseId(purchase.getPurchaseId());
-                                            item.setPurchaseName(purchase.getPurchaseName());
-                                            item.setCost(purchase.getCost().floatValue());
-                                            item.setHasReceipt(hasReceipt);
-
-                                            if (user != null) {
-                                                item.setResponsibleName(user.getName());
-                                                item.setResponsibleSurname(user.getSurname());
-                                            }
-
-                                            return item;
-                                        });
-                            })
+                            .flatMap(this::convertToCostAllocationItem)
                             .collectList()
                             .map(costItems -> {
                                 response.setCostAllocationList(costItems);
@@ -105,7 +86,11 @@ public class CostListController implements CostListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getPersonalCostList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return CostListApi.super.getPersonalCostList(eventId, exchange);
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMapMany(userLogin -> costListService.getPurchasesForUser(eventId, userLogin))
+                .flatMap(this::convertToCostAllocationItem)
+                .collectList()
+                .map(list -> ResponseEntity.ok(Flux.fromIterable(list)));
     }
 
     @Deprecated
@@ -182,6 +167,27 @@ public class CostListController implements CostListApi {
                     return Mono.just(ResponseEntity.ok()
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                             .body(multipart));
+                });
+    }
+
+    private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto) {
+        PurchaseEntity purchase = dto.getPurchase();
+        UserProfileEntity user = dto.getResponsibleUser();
+
+        return costListService.hasReceipt(purchase.getPurchaseId())
+                .map(hasReceipt -> {
+                    CostAllocationListItem item = new CostAllocationListItem();
+                    item.setPurchaseId(purchase.getPurchaseId());
+                    item.setPurchaseName(purchase.getPurchaseName());
+                    item.setCost(purchase.getCost().floatValue());
+                    item.setHasReceipt(hasReceipt);
+
+                    if (user != null) {
+                        item.setResponsibleName(user.getName());
+                        item.setResponsibleSurname(user.getSurname());
+                    }
+
+                    return item;
                 });
     }
 }
