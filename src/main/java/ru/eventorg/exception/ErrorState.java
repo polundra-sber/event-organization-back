@@ -79,6 +79,12 @@ public enum ErrorState {
             "Мероприятие не активно"
     ),
 
+    ROLE_IS_UNCHANGEABLE(
+            HttpStatus.CONFLICT,
+            "Нельзя поменять роль создателя"
+    ),
+
+
     PURCHASE_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Ответственный на покупку уже назначен"
