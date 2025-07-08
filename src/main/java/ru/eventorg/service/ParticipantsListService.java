@@ -4,11 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.dto.FullUser;
 import ru.eventorg.entity.EventUserListEntity;
+import ru.eventorg.exception.ErrorState;
+import ru.eventorg.exception.RoleOfCreatorIsUnchangeable;
 import ru.eventorg.repository.EventUserListEntityRepository;
+import ru.eventorg.security.SecurityUtils;
+import ru.eventorg.service.enums.UserRole;
 
 import java.util.List;
 
@@ -18,6 +23,8 @@ import java.util.List;
 public class ParticipantsListService {
     private final R2dbcEntityTemplate template;
     private final EventUserListEntityRepository eventUserListEntityRepository;
+    private final EventService eventService;
+    private final RoleService roleService;
 
     private final int paginationSize = 10;
 
@@ -54,30 +61,51 @@ public class ParticipantsListService {
 
     public Mono<Void> addParticipantsToEvent(Integer eventId, Mono<List<String>> logins) {
         return template.getDatabaseClient()
-                .sql(
-                    "SELECT role_id FROM role WHERE role_name = $1"
-                )
-                .bind(0, "Участник")
+                .sql("SELECT role_id FROM role WHERE role_name = 'Участник'")
                 .map((row, meta) -> row.get("role_id", Integer.class))
                 .one()
-                .flatMapMany(roleId ->
-                        logins
-                                .flatMapMany(Flux::fromIterable)
-                                .flatMap(login ->
-                                        eventUserListEntityRepository.existsEventIdByEventIdAndUserId(eventId, login)
-                                                .flatMap(existsUserInEvent -> {
-                                                    // log.info("login {} existsInEvent: {}", login, existsUserInEvent);
-                                                    if (existsUserInEvent) {
-                                                        return Mono.empty();   // Уже участник – пропускаем
-                                                    }
-                                                    EventUserListEntity entity = new EventUserListEntity(
-                                                            null, eventId, login, roleId
-                                                    );
-                                                    return eventUserListEntityRepository.save(entity).then();
-                                                })
+                .flatMapMany(participantRoleId ->
+                        template.getDatabaseClient()
+                                .sql("SELECT role_id FROM role WHERE role_name = 'Не допущен'")
+                                .map((row, meta) -> row.get("role_id", Integer.class))
+                                .one()
+                                .flatMapMany(notAllowedRoleId ->
+                                        logins.flatMapMany(Flux::fromIterable)
+                                                .flatMap(login -> processParticipant(
+                                                        eventId,
+                                                        login,
+                                                        participantRoleId,
+                                                        notAllowedRoleId
+                                                ))
                                 )
                 )
-                .then();  // вернуть Mono<Void> по завершении всех вставок
+                .then();
+    }
+
+    private Mono<Void> processParticipant(
+            Integer eventId,
+            String login,
+            Integer participantRoleId,
+            Integer notAllowedRoleId
+    ) {
+        return eventUserListEntityRepository.getEventUserListEntityByEventIdAndUserId(eventId, login)
+                .flatMap(existingEntry -> {
+                    // Если запись существует и роль "не допущен" - обновляем
+                    if (existingEntry.getRoleId().equals(notAllowedRoleId)) {
+                        return eventUserListEntityRepository.updateRoleId(
+                                existingEntry.getRoleId(),
+                                participantRoleId
+                        ).then();
+                    }
+                    // Если роль уже участник/организатор - пропускаем
+                    return Mono.empty();
+                })
+                .switchIfEmpty(
+                        // Если записи нет - создаем новую
+                        eventUserListEntityRepository.save(
+                                new EventUserListEntity(null, eventId, login, participantRoleId)
+                        ).then()
+                );
     }
 
     public Flux<FullUser> searchUsersByNameSurnameEmail(Integer eventId, String searchText, Integer sequenceNumber) {
@@ -128,4 +156,86 @@ public class ParticipantsListService {
                 })
                 .all();
     }
+
+
+    public Mono<Void> deleteParticipantFromParticipantsList(Integer eventId, String participantLogin) {
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(currentUserLogin -> {
+                    // 1. Проверяем что мероприятие существует и активно
+                    return eventService.validateExists(eventId)
+                            .then(eventService.validateEventIsActive(eventId))
+
+                            // 2. Проверяем что текущий пользователь - организатор или создатель
+                            .then(roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin))
+
+                            // 3. Проверяем что удаляемый пользователь - участник мероприятия
+                            .then(roleService.validateIsParticipant(eventId, participantLogin))
+
+                            // 4. Удаляем участника
+                            .then(eventUserListEntityRepository.deleteEventUserListEntityByEventIdAndUserId(eventId, participantLogin))
+                            .then();
+                });
+    }
+
+    public Mono<String> changeParticipantRole(Integer eventId, String participantLogin) {
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(currentUserLogin -> {
+                    // 1. Проверяем что мероприятие существует и активно
+                    return eventService.validateExists(eventId)
+                            .then(eventService.validateEventIsActive(eventId))
+
+                            // 2. Проверяем что текущий пользователь - создатель
+                            .then(roleService.checkIfCreator(eventId, currentUserLogin))
+
+                            // 3. Проверяем что participant - участник (но не создатель)
+                            .then(validateParticipantIsNotCreator(eventId, participantLogin))
+
+                            // 4. Получаем текущую роль участника
+                            .then(roleService.getUserRoleInEvent(eventId, participantLogin))
+
+                            // 5. Определяем новую роль и обновляем
+                            .flatMap(currentRole -> {
+                                String newRole = determineNewRole(currentRole);
+                                return updateParticipantRole(eventId, participantLogin, newRole)
+                                        .thenReturn(newRole);
+                            });
+                });
+    }
+
+    private Mono<Void> validateParticipantIsNotCreator(Integer eventId, String participantLogin) {
+        return roleService.getUserRoleInEvent(eventId, participantLogin)
+                .flatMap(role -> {
+                    if (UserRole.CREATOR.getDisplayName().equalsIgnoreCase(role)) {
+                        return Mono.error(new RoleOfCreatorIsUnchangeable(ErrorState.ROLE_IS_UNCHANGEABLE));
+                    }
+                    return Mono.empty();
+                });
+    }
+
+    private String determineNewRole(String currentRole) {
+        if (UserRole.ORGANIZER.getDisplayName().equalsIgnoreCase(currentRole)) {
+            return UserRole.PARTICIPANT.getDisplayName();
+        } else if (UserRole.PARTICIPANT.getDisplayName().equalsIgnoreCase(currentRole)) {
+            return UserRole.ORGANIZER.getDisplayName();
+        }
+        throw new IllegalStateException(currentRole);
+    }
+
+    private Mono<Long> updateParticipantRole(Integer eventId, String participantLogin, String newRole) {
+        String sql = """
+        UPDATE event_user_list eul
+        SET role_id = (SELECT role_id FROM role WHERE role_name = :newRole)
+        WHERE eul.event_id = :eventId 
+        AND eul.user_id = :participantLogin
+        """;
+
+        return template.getDatabaseClient()
+                .sql(sql)
+                .bind("eventId", eventId)
+                .bind("participantLogin", participantLogin)
+                .bind("newRole", newRole)
+                .fetch()
+                .rowsUpdated();
+    }
+
 }

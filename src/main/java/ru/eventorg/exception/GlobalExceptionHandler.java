@@ -119,5 +119,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    @ExceptionHandler(RoleOfCreatorIsUnchangeable.class)
+    public ResponseEntity<String> handleRoleOfCreatorIsUnchangeable(RoleOfCreatorIsUnchangeable ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
 }
 
