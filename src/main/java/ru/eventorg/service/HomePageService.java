@@ -89,7 +89,6 @@ public class HomePageService {
                 .flatMap(this::buildEventPreviewCustom);
     }
 
-
     public Mono<EventCustom> getEventById(Integer eventId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username ->

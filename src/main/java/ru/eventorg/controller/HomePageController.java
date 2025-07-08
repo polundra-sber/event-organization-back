@@ -32,7 +32,7 @@ public class HomePageController implements HomePageApi {
     public Mono<ResponseEntity<Event>> createEvent(Mono<EventEditor> eventEditor, ServerWebExchange exchange) throws Exception {
         return eventEditor
                 .flatMap(homePageService::createEvent)
-                .map(this::toEventModel)  // Преобразование Entity в DTO
+                .map(this::toEventModel)
                 .map(event -> ResponseEntity.status(HttpStatus.CREATED).body(event));
     }
 
@@ -64,14 +64,14 @@ public class HomePageController implements HomePageApi {
     @Override
     public Mono<ResponseEntity<Event>> getEventById(Integer eventId, ServerWebExchange exchange) throws Exception {
         return homePageService.getEventById(eventId)
-                .map(this::toEventModel)  // Преобразование Entity в DTO
+                .map(this::toEventModel)
                 .map(event -> ResponseEntity.status(HttpStatus.OK).body(event));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<Event>>> getEvents(ServerWebExchange exchange) throws Exception {
         Flux<Event> events = homePageService.getEvents()
-                .map(this::toEventModel); // Преобразуем каждый EventEntity в Event
+                .map(this::toEventModel);
         return Mono.just(ResponseEntity.ok(events));
     }
 

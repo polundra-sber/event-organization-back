@@ -10,6 +10,7 @@ import java.time.LocalTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class EventPreviewCustom {
     private Integer eventId;
     private String eventName;
