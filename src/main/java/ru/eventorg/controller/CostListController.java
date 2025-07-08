@@ -68,7 +68,7 @@ public class CostListController implements CostListApi {
     @Override
     public Mono<ResponseEntity<Flux<UserDemo>>> getParticipantsForPurchaseFromCostList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
         return eventValidationService.validateExists(eventId)
-                .then(purchaseValidationService.purchaseExists(purchaseId))
+                .then(purchaseValidationService.purchaseInEvent(purchaseId, eventId))
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login -> roleService.validateIsParticipant(eventId, login)
                                 .thenReturn(login)))
@@ -96,7 +96,7 @@ public class CostListController implements CostListApi {
     @Deprecated
     public Mono<ResponseEntity<ReceiptList>> getReceiptsForPurchase(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
         return eventValidationService.validateExists(eventId)
-                .then(purchaseValidationService.purchaseExists(purchaseId))
+                .then(purchaseValidationService.purchaseInEvent(purchaseId, eventId))
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
                                 roleService.validateIsParticipant(eventId, login)
