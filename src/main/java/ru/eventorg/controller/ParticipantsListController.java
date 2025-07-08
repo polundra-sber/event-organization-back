@@ -25,8 +25,7 @@ public class ParticipantsListController implements ParticipantsListApi {
 
     private final ParticipantsListService participantsListService;
     private final RoleService roleService;
-    private final ParticipantValidationService participantValidationService;
-    private final EventValidationService eventValidationService;
+    private final EventService eventValidationService;
 
     /**
      * POST /events/{event_id}/participants-list/add-participant : Добавить выбранных участников
@@ -63,7 +62,7 @@ public class ParticipantsListController implements ParticipantsListApi {
         return eventValidationService.validateExists(eventId)
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
-                                participantValidationService.validateIsParticipant(eventId, login)
+                                roleService.validateIsParticipant(eventId, login)
                                         .thenReturn(login)
                         )
                 )
@@ -96,7 +95,7 @@ public class ParticipantsListController implements ParticipantsListApi {
         return eventValidationService.validateExists(eventId)
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
-                                participantValidationService.validateIsParticipant(eventId, login)
+                                roleService.validateIsParticipant(eventId, login)
                                         .thenReturn(login)
                         )
                         .flatMap(validatedLogin -> {
