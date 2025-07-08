@@ -1236,6 +1236,7 @@ paths:
   /events/{event_id}/purchases-list/{purchase_id}/get-receipt:
     get:
       tags:
+        - Ignored
         - Cost list
         - Cost allocation list
         - My purchases
@@ -1259,6 +1260,10 @@ paths:
             multipart/form-data:
               schema:
                 $ref: '#/components/schemas/ReceiptList'
+              encoding:
+                files:
+                  contentType: image/jpeg
+                  explode: true
         '404':
           description: Мероприятие с данным идентификатором не найдено
           content:

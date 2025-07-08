@@ -1,15 +1,19 @@
 package ru.eventorg.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.api.CostListApi;
 import org.openapitools.model.CostAllocationListItem;
 import org.openapitools.model.GetCostList200Response;
 import org.openapitools.model.ReceiptList;
 import org.openapitools.model.UserDemo;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,6 +26,7 @@ import ru.eventorg.service.*;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CostListController implements CostListApi {
@@ -103,7 +108,7 @@ public class CostListController implements CostListApi {
         return CostListApi.super.getPersonalCostList(eventId, exchange);
     }
 
-    @Override
+    @Deprecated
     public Mono<ResponseEntity<ReceiptList>> getReceiptsForPurchase(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
         return eventValidationService.validateExists(eventId)
                 .then(purchaseValidationService.purchaseExists(purchaseId))
@@ -127,6 +132,55 @@ public class CostListController implements CostListApi {
                             .ok()
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                             .body(rl));
+                });
+    }
+
+    @RequestMapping(
+            method = RequestMethod.GET,
+            value = "/events/{event_id}/purchases-list/{purchase_id}/get-receipt",
+            produces = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE }
+    )
+    public Mono<ResponseEntity<MultiValueMap<String, HttpEntity<Resource>>>> getReceiptImages(
+            @Parameter(name = "event_id", required = true, in = ParameterIn.PATH) @PathVariable("event_id") Integer eventId,
+            @Parameter(name = "purchase_id", required = true, in = ParameterIn.PATH) @PathVariable("purchase_id") Integer purchaseId
+    ) {
+        return eventValidationService.validateExists(eventId)
+                .then(purchaseValidationService.purchaseInEvent(purchaseId, eventId))
+                .then(
+                        SecurityUtils.getCurrentUserLogin()
+                                .flatMap(login ->
+                                        participantValidationService.validateIsParticipant(eventId, login)
+                                                .thenReturn(login)
+                                )
+                .thenMany(costListService.getReceiptResources(eventId, purchaseId))
+                .collectList()
+                .flatMap(resources -> {
+                    if (resources.isEmpty()) {
+                        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+
+                        MultiValueMap<String, HttpEntity<Resource>> multipart =
+                                (MultiValueMap<String, HttpEntity<Resource>>) (MultiValueMap<?, ?>) builder.build();
+
+                        return Mono.just(ResponseEntity
+                                .status(HttpStatus.NOT_FOUND)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .body(multipart));
+                    }
+
+                    MultipartBodyBuilder builder = new MultipartBodyBuilder();
+                    for (Resource res : resources) {
+                        builder.part("file", res)
+                                .header(HttpHeaders.CONTENT_DISPOSITION,
+                                        "form-data; name=\"file\"; filename=\"" + res.getFilename() + "\"")
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE);
+                    }
+
+                    MultiValueMap<String, HttpEntity<Resource>> multipart =
+                            (MultiValueMap<String, HttpEntity<Resource>>) (MultiValueMap<?, ?>) builder.build();
+
+                    return Mono.just(ResponseEntity.ok()
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                            .body(multipart));
                 });
     }
 }

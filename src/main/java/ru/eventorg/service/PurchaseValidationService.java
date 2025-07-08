@@ -18,4 +18,11 @@ public class PurchaseValidationService {
                         ? Mono.empty()
                         : Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)));
     }
+
+    public Mono<Void> purchaseInEvent(Integer purchaseId, Integer eventId) {
+        return purchaseEntityRepository.existsPurchaseEntityByPurchaseIdAndEventId(purchaseId, eventId)
+                .flatMap(exists -> exists
+                ? Mono.empty()
+                        : Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)));
+    }
 }
