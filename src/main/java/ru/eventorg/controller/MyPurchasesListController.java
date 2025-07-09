@@ -3,7 +3,6 @@ package ru.eventorg.controller;
 import org.openapitools.api.MyPurchasesApi;
 import org.openapitools.model.EditPurchaseCostInMyPurchasesListRequest;
 import org.openapitools.model.MyPurchaseListItem;
-import org.openapitools.model.PurchaseListItem;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,7 +10,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.dto.MyPurchaseListItemCustom;
-import ru.eventorg.dto.PurchaseWithUserDto;
 import ru.eventorg.service.MyPurchasesListService;
 
 import java.util.List;
@@ -31,7 +29,8 @@ public class MyPurchasesListController implements MyPurchasesApi {
 
     @Override
     public Mono<ResponseEntity<Void>> denyPurchaseInMyPurchasesList(Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return MyPurchasesApi.super.denyPurchaseInMyPurchasesList(purchaseId, exchange);
+        return myPurchasesListService.denyPurchaseInMyPurchasesList(purchaseId)
+                .thenReturn(ResponseEntity.ok().build());
     }
 
     @Override

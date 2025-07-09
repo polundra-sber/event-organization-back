@@ -130,4 +130,10 @@ public class GlobalExceptionHandler {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
+
+    @ExceptionHandler(CannotDenyPurchaseException.class)
+    public ResponseEntity<String> handleCannotDenyPurchaseException(CannotDenyPurchaseException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
 }
