@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.api.ParticipantsListApi;
-import org.openapitools.model.ChangParticipantRole200Response;
+import org.openapitools.model.ChangeParticipantRole200Response;
 import org.openapitools.model.User;
 import org.openapitools.model.UserDemo;
 import org.springframework.http.ResponseEntity;
@@ -118,10 +118,10 @@ public class ParticipantsListController implements ParticipantsListApi {
     }
 
     @Override
-    public Mono<ResponseEntity<ChangParticipantRole200Response>> changParticipantRole(Integer eventId, String participantLogin, ServerWebExchange exchange) throws Exception {
+    public Mono<ResponseEntity<ChangeParticipantRole200Response>> changeParticipantRole(Integer eventId, String participantLogin, ServerWebExchange exchange) throws Exception {
         return participantsListService.changeParticipantRole(eventId, participantLogin)
                 .map(newRole -> ResponseEntity.ok(
-                        new ChangParticipantRole200Response().role(newRole)
+                        new ChangeParticipantRole200Response().role(newRole)
                 ));
     }
 

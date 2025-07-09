@@ -485,7 +485,7 @@ paths:
     patch:
       tags:
         - Participants list
-      operationId: changParticipantRole
+      operationId: changeParticipantRole
       summary: Изменить роль на организатора/участника
       parameters:
         - in: path
