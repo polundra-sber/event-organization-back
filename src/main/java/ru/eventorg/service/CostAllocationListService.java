@@ -3,14 +3,20 @@ package ru.eventorg.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.eventorg.entity.PayerEntity;
 import ru.eventorg.repository.EventEntityRepository;
+import ru.eventorg.repository.PayerEntityRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CostAllocationListService {
     private final R2dbcEntityTemplate template;
     private final EventEntityRepository eventEntityRepository;
+    private final PayerEntityRepository payerEntityRepository;
 
     /**
      * Распределение расходов между участниками мероприятия
@@ -119,5 +125,22 @@ public class CostAllocationListService {
                                 .rowsUpdated()
                                 .then(eventEntityRepository.markCostAllocated(eventId))
                 ).then();
+    }
+
+    public Mono<Void> addParticipantsToPurchase(Integer purchaseId, Mono<List<String>> logins) {
+        return logins.flatMapMany(Flux::fromIterable)
+                .flatMap(login ->
+                        payerEntityRepository.existsByPurchaseIdAndUserId(purchaseId, login)
+                                .flatMap(exists -> {
+                                    if (exists) {
+                                        // Уже участник — пропускаем
+                                        return Mono.empty();
+                                    }
+                                    // Добавляем нового плательщика
+                                    PayerEntity entity = new PayerEntity(null, purchaseId, login);
+                                    return payerEntityRepository.save(entity).then();
+                                })
+                )
+                .then();
     }
 }
