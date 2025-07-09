@@ -84,6 +84,11 @@ public enum ErrorState {
             "Ответственный на покупку уже назначен"
     ),
 
+    PURCHASE_DOES_NOT_HAVE_RESPONSIBLE(
+            HttpStatus.CONFLICT,
+            "Ответственный на покупку не назначен"
+    ),
+
     NOT_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Вы не являетесь ответственным"

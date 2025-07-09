@@ -119,5 +119,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
+    public ResponseEntity<String> handlePurchaseNullResponsibleException(PurchaseNullResponsibleException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
 }
 

@@ -30,6 +30,7 @@ public class CostAllocationListController implements CostAllocationListApi {
     private final RoleService roleService;
     private final EventService eventValidationService;
     private final PurchaseValidationService purchaseValidationService;
+    private final CostAllocationListService costAllocationListService;
 
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
@@ -69,7 +70,13 @@ public class CostAllocationListController implements CostAllocationListApi {
 
     @Override
     public Mono<ResponseEntity<Void>> sendCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return CostAllocationListApi.super.sendCostAllocationList(eventId, exchange);
+        return purchaseValidationService.allPurchasesHasResponsible(eventId)
+                .then(SecurityUtils.getCurrentUserLogin())
+                .flatMap(login ->
+                        roleService.checkIfCreator(eventId, login)
+                                .then(costAllocationListService.allocateDebtsBetweenParticipants(eventId))
+                )
+                .thenReturn(ResponseEntity.ok().<Void>build());
     }
 
     /**

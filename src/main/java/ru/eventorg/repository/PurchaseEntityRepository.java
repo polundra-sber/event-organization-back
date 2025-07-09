@@ -13,6 +13,7 @@ public interface PurchaseEntityRepository extends R2dbcRepository<PurchaseEntity
     Mono<Void> deleteByPurchaseIdAndEventId(Integer purchaseId, Integer eventId);
     Mono<PurchaseEntity> findByPurchaseIdAndEventId(Integer purchaseId, Integer eventId);
     Mono<Boolean> existsPurchaseEntityByPurchaseIdAndEventId(Integer purchaseId, Integer eventId);
+    Mono<Boolean> existsPurchaseEntitiesByEventIdAndResponsibleUserIsNull(Integer eventId);
 }
 
 

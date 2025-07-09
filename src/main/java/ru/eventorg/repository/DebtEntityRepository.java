@@ -9,7 +9,7 @@ import ru.eventorg.entity.DebtEntity;
 
 public interface DebtEntityRepository extends R2dbcRepository<DebtEntity, Integer> {
 
-    @Query("SELECT EXISTS(SELECT 1 FROM debt WHERE debt_id = :debtId AND recipient_id = :username)")
+    @Query("SELECT EXISTS(SELECT 1 FROM debt WHERE debt_id = :debtId AND receiver_id = :username)")
     Mono<Boolean> isUserRecipient(@Param("debtId") Integer debtId, @Param("username") String username);
 
     @Query("SELECT EXISTS(SELECT 1 FROM debt WHERE debt_id = :debtId AND payer_id = :username)")
