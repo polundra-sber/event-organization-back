@@ -34,16 +34,23 @@ public class CostAllocationListController implements CostAllocationListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        Mono<Void> validateEvent = eventService.validateExists(eventId);
-
-        return validateEvent
+        return eventService.validateExists(eventId)
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
-                                .flatMap(isCreator -> purchaseListService.getPurchasesByEventId(eventId)
-                                        .flatMap(this::convertToCostAllocationItem)
-                                        .collectList()
-                                        .map(list -> ResponseEntity.ok(Flux.fromIterable(list))))
+                                .then(
+                                        Mono.just(ResponseEntity.ok(
+                                                purchaseListService.getPurchasesByEventId(eventId)
+                                                .flatMap(dto -> {
+                                                    int purchaseId = dto.getPurchase().getPurchaseId();
+                                                    return costListService.getPayersForPurchase(purchaseId)
+                                                            .count()
+                                                            .flatMap(count ->
+                                                                    convertToCostAllocationItem(dto, Math.toIntExact(count))
+                                                            );
+                                                })
+                                        ))
+                                )
                 );
     }
 
@@ -133,7 +140,7 @@ public class CostAllocationListController implements CostAllocationListApi {
                 .thenReturn(ResponseEntity.ok().<Void>build());
     }
 
-    private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto) {
+    private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto, Integer countParticipants) {
         PurchaseEntity purchase = dto.getPurchase();
         UserProfileEntity user = dto.getResponsibleUser();
 
@@ -149,6 +156,8 @@ public class CostAllocationListController implements CostAllocationListApi {
                         item.setResponsibleName(user.getName());
                         item.setResponsibleSurname(user.getSurname());
                     }
+
+                    item.setCountParticipants(countParticipants);
 
                     return item;
                 });
