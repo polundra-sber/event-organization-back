@@ -56,7 +56,14 @@ public class CostListController implements CostListApi {
                     }
 
                     return Flux.fromIterable(purchases)
-                            .flatMap(this::convertToCostAllocationItem)
+                            .flatMap(purchaseWithUserDto ->
+                                    costListService.getPayersForPurchase(purchaseWithUserDto.getPurchase().getPurchaseId())
+                                            .count()
+                                            .flatMap(
+                                                    payersCount ->
+                                                            convertToCostAllocationItem(purchaseWithUserDto, Math.toIntExact(payersCount))
+                                            )
+                            )
                             .collectList()
                             .map(costItems -> {
                                 response.setCostAllocationList(costItems);
@@ -86,11 +93,18 @@ public class CostListController implements CostListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getPersonalCostList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return SecurityUtils.getCurrentUserLogin()
+        return Mono.just(ResponseEntity.ok(
+                SecurityUtils.getCurrentUserLogin()
                 .flatMapMany(userLogin -> costListService.getPurchasesForUser(eventId, userLogin))
-                .flatMap(this::convertToCostAllocationItem)
-                .collectList()
-                .map(list -> ResponseEntity.ok(Flux.fromIterable(list)));
+                .flatMap(dto -> {
+                    int purchaseId = dto.getPurchase().getPurchaseId();
+                    return costListService.getPayersForPurchase(purchaseId)
+                            .count()
+                            .flatMap(count ->
+                                    convertToCostAllocationItem(dto, Math.toIntExact(count))
+                            );
+                })
+        ));
     }
 
     @Deprecated
@@ -170,7 +184,7 @@ public class CostListController implements CostListApi {
                 });
     }
 
-    private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto) {
+    private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto, Integer countParticipants) {
         PurchaseEntity purchase = dto.getPurchase();
         UserProfileEntity user = dto.getResponsibleUser();
 
@@ -186,6 +200,8 @@ public class CostListController implements CostListApi {
                         item.setResponsibleName(user.getName());
                         item.setResponsibleSurname(user.getSurname());
                     }
+
+                    item.setCountParticipants(countParticipants);
 
                     return item;
                 });
