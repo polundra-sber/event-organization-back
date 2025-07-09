@@ -274,23 +274,37 @@ public class HomePageService {
     }
 
     private Mono<String> checkAndJoinEvent(Integer eventId, String userId) {
-        return eventUserListRepository.existsEventIdByEventIdAndUserId(eventId, userId)
-                .flatMap(alreadyJoined -> {
-                    if (alreadyJoined) {
-                        return Mono.error(new UserAlreadyJoinException(ErrorState.USER_ALREADY_JOINED));
-                    }
+        return eventUserListRepository.getEventUserListEntityByEventIdAndUserId(eventId, userId)
+                .flatMap(existingEntry ->
+                        roleRepository.findById(existingEntry.getRoleId())
+                                .flatMap(role -> {
+                                    String roleName = role.getRoleName();
 
-                    return eventService.validateExists(eventId)
-                            .then(eventService.validateEventIsActive(eventId))
-                            .then(Mono.defer(() -> {
-                                EventUserListEntity newJoin = new EventUserListEntity();
-                                newJoin.setEventId(eventId);
-                                newJoin.setUserId(userId);
-                                newJoin.setRoleId(4);
+                                    // 1. Проверка на участника мероприятия
+                                    if (UserRole.PARTICIPANT.getDisplayName().equalsIgnoreCase(roleName) ||
+                                            UserRole.CREATOR.getDisplayName().equalsIgnoreCase(roleName) ||
+                                            UserRole.ORGANIZER.getDisplayName().equalsIgnoreCase(roleName)) {
+                                        return Mono.<String>error(new UserAlreadyJoinException(ErrorState.USER_ALREADY_JOINED));
+                                    }
 
-                                return eventUserListRepository.save(newJoin)
-                                        .thenReturn("Заявка успешно отправлена");
-                            }));
-                });
+                                    // 2. Проверка на статус "не допущен"
+                                    if (UserRole.NOT_ALLOWED.getDisplayName().equalsIgnoreCase(roleName)) {
+                                        return Mono.<String>error(new ApplicationAlreadySubmitted(ErrorState.APPLICATION_SUBMITTED));
+                                    }
+
+                                    return Mono.<String>error(new IllegalStateException());
+                                })
+                )
+                .switchIfEmpty(Mono.defer(() ->
+                        roleRepository.getRoleIdByRoleName(UserRole.NOT_ALLOWED.getDisplayName())
+                                .flatMap(pendingRole ->
+                                        eventService.validateExists(eventId)
+                                                .then(eventService.validateEventIsActive(eventId))
+                                                .then(eventUserListRepository.save(
+                                                                        new EventUserListEntity(null, eventId, userId, pendingRole)
+                                                                )
+                                                                .thenReturn("Заявка успешно отправлена")
+                                                )
+                                )));
     }
 }
