@@ -71,10 +71,10 @@ public class CostAllocationListController implements CostAllocationListApi {
     @Override
     public Mono<ResponseEntity<Void>> sendCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
         return eventValidationService.validateExists(eventId)
-                .then(purchaseValidationService.allPurchasesHasResponsible(eventId))
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
+                                .then(purchaseValidationService.allPurchasesHasResponsible(eventId))
                                 .then(costAllocationListService.allocateDebtsBetweenParticipants(eventId))
                 )
                 .thenReturn(ResponseEntity.ok().<Void>build());
