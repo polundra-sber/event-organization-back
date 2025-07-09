@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.entity.PayerEntity;
+import ru.eventorg.exception.ErrorState;
+import ru.eventorg.exception.UserNotPurchaseParticipantException;
 import ru.eventorg.repository.EventEntityRepository;
 import ru.eventorg.repository.PayerEntityRepository;
 
@@ -142,5 +144,27 @@ public class CostAllocationListService {
                                 })
                 )
                 .then();
+    }
+
+    public Mono<Void> removeParticipantsFromPurchase(Integer purchaseId, Mono<List<String>> loginsMono) {
+        return loginsMono
+                .flatMap(logins ->
+                        Flux.fromIterable(logins)
+                                .flatMap(login ->
+                                        payerEntityRepository.existsByPurchaseIdAndUserId(purchaseId, login)
+                                                .flatMap(exists -> {
+                                                    if (!exists) {
+                                                        return Mono.error(new UserNotPurchaseParticipantException(ErrorState.USER_NOT_PURCHASE_PARTICIPANT));
+                                                    }
+                                                    return Mono.just(login);
+                                                })
+                                )
+                                .collectList()
+                                .flatMap(validLogins ->
+                                        Flux.fromIterable(validLogins)
+                                                .flatMap(login -> payerEntityRepository.deleteByPurchaseIdAndUserId(purchaseId, login))
+                                                .then()
+                                )
+                );
     }
 }

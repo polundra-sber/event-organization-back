@@ -32,6 +32,11 @@ public enum ErrorState {
             "Пользователь не является участником мероприятия"
     ),
 
+    USER_NOT_PURCHASE_PARTICIPANT(
+            HttpStatus.FORBIDDEN,
+            "Пользователь не является участником покупки"
+    ),
+
     PURCHASE_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Покупка с указанным идентификатором не найдена"

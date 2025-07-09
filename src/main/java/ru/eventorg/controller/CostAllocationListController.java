@@ -107,7 +107,14 @@ public class CostAllocationListController implements CostAllocationListApi {
             @Valid @RequestBody Mono<List<String>> logins,
             ServerWebExchange exchange
     ) {
-        return Mono.empty();
+        return eventValidationService.validateExists(eventId)
+                .then(SecurityUtils.getCurrentUserLogin())
+                .flatMap(login ->
+                        roleService.checkIfCreator(eventId, login)
+                                .then(purchaseValidationService.purchaseInEvent(purchaseId, eventId))
+                                .then(costAllocationListService.removeParticipantsFromPurchase(purchaseId, logins))
+                )
+                .thenReturn(ResponseEntity.ok().<Void>build());
     }
 
     /**

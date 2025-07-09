@@ -6,4 +6,5 @@ import ru.eventorg.entity.PayerEntity;
 
 public interface PayerEntityRepository extends R2dbcRepository<PayerEntity, Integer> {
     Mono<Boolean> existsByPurchaseIdAndUserId(Integer purchaseId, String userId);
+    Mono<PayerEntity> deleteByPurchaseIdAndUserId(Integer purchaseId, String userId);
 }
