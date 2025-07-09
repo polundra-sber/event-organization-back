@@ -51,6 +51,11 @@ public enum ErrorState {
             "Создатель не может покинуть мероприятие"
     ),
 
+    APPLICATION_SUBMITTED(
+            HttpStatus.CONFLICT,
+            "Заявка на присоединение к мероприятию в обработке"
+    ),
+
     EVENT_NOT_ACTIVE(
             HttpStatus.FORBIDDEN,
             "Мероприятие не активно"

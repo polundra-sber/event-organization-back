@@ -64,5 +64,11 @@ public class GlobalExceptionHandler {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
+
+    @ExceptionHandler(ApplicationAlreadySubmitted.class)
+    public ResponseEntity<String> handleApplicationAlreadySubmitted(ApplicationAlreadySubmitted ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
 }
 
