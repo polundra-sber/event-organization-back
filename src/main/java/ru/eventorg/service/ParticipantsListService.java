@@ -1,5 +1,7 @@
 package ru.eventorg.service;
 
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -29,34 +31,44 @@ public class ParticipantsListService {
     private final int paginationSize = 10;
 
     public Flux<FullUser> getParticipantsById(Integer eventId) {
-        String sql = """
-            SELECT
-                eul.user_id AS login,
-                r.role_name AS role,
-                us.email       AS email,
-                us.password    AS password,
-                up.name        AS name,
-                up.surname     AS surname,
-                up.comment_money_transfer AS commentMoneyTransfer
-            FROM event_user_list eul
-            JOIN user_profile up ON up.login = eul.user_id
-            JOIN user_secret  us ON us.login = eul.user_id
-            JOIN role r ON r.role_id = eul.role_id
-            WHERE eul.event_id = $1
-            """;
-        return template.getDatabaseClient()
-                .sql(sql)
-                .bind(0, eventId)
-                .map((row, metadata) -> new FullUser(
-                        row.get("login", String.class),
-                        row.get("role", String.class),
-                        row.get("email", String.class),
-                        row.get("password", String.class),
-                        row.get("name", String.class),
-                        row.get("surname", String.class),
-                        row.get("commentMoneyTransfer", String.class)
-                ))
-                .all();
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMapMany(login -> roleService.getUserRoleInEvent(eventId, login)
+                        .flatMapMany(currentUserRole -> {
+                            boolean showAll = "Создатель".equalsIgnoreCase(currentUserRole);
+                            String sql = """
+                    SELECT
+                        eul.user_id AS login,
+                        r.role_name AS role,
+                        us.email AS email,
+                        us.password AS password,
+                        up.name AS name,
+                        up.surname AS surname,
+                        up.comment_money_transfer AS commentMoneyTransfer
+                    FROM event_user_list eul
+                    JOIN user_profile up ON up.login = eul.user_id
+                    JOIN user_secret us ON us.login = eul.user_id
+                    JOIN role r ON r.role_id = eul.role_id
+                    WHERE eul.event_id = $1
+                    """ + (showAll ? "" : " AND r.role_name != 'Не допущен'");
+
+                            return template.getDatabaseClient()
+                                    .sql(sql)
+                                    .bind(0, eventId)
+                                    .map(this::mapRowToFullUser)
+                                    .all();
+                        }));
+    }
+
+    private FullUser mapRowToFullUser(Row row, RowMetadata metadata) {
+        return new FullUser(
+                row.get("login", String.class),
+                row.get("role", String.class),
+                row.get("email", String.class),
+                row.get("password", String.class),
+                row.get("name", String.class),
+                row.get("surname", String.class),
+                row.get("commentMoneyTransfer", String.class)
+        );
     }
 
     public Mono<Void> addParticipantsToEvent(Integer eventId, Mono<List<String>> logins) {
@@ -71,12 +83,25 @@ public class ParticipantsListService {
                                 .one()
                                 .flatMapMany(notAllowedRoleId ->
                                         logins.flatMapMany(Flux::fromIterable)
-                                                .flatMap(login -> processParticipant(
-                                                        eventId,
-                                                        login,
-                                                        participantRoleId,
-                                                        notAllowedRoleId
-                                                ))
+                                                .flatMap(login ->
+                                                        eventUserListEntityRepository
+                                                                .existsByEventIdAndUserIdAndRoleId(
+                                                                        eventId,
+                                                                        login,
+                                                                        participantRoleId
+                                                                )
+                                                                .flatMap(isParticipant -> {
+                                                                    if (!isParticipant) {
+                                                                        return processParticipant(
+                                                                                eventId,
+                                                                                login,
+                                                                                participantRoleId,
+                                                                                notAllowedRoleId
+                                                                        );
+                                                                    }
+                                                                    return Mono.empty();
+                                                                })
+                                                )
                                 )
                 )
                 .then();
@@ -88,24 +113,21 @@ public class ParticipantsListService {
             Integer participantRoleId,
             Integer notAllowedRoleId
     ) {
-        return eventUserListEntityRepository.getEventUserListEntityByEventIdAndUserId(eventId, login)
-                .flatMap(existingEntry -> {
-                    // Если запись существует и роль "не допущен" - обновляем
-                    if (existingEntry.getRoleId().equals(notAllowedRoleId)) {
-                        return eventUserListEntityRepository.updateRoleId(
-                                existingEntry.getRoleId(),
-                                participantRoleId
-                        ).then();
-                    }
-                    // Если роль уже участник/организатор - пропускаем
-                    return Mono.empty();
-                })
-                .switchIfEmpty(
-                        // Если записи нет - создаем новую
-                        eventUserListEntityRepository.save(
-                                new EventUserListEntity(null, eventId, login, participantRoleId)
-                        ).then()
-                );
+        return template.getDatabaseClient()
+                .sql("""
+                INSERT INTO event_user_list (event_id, user_id, role_id)
+                VALUES (:eventId, :login, :participantRoleId)
+                ON CONFLICT (event_id, user_id) DO UPDATE
+                SET role_id = :participantRoleId
+                WHERE event_user_list.role_id = :notAllowedRoleId
+                """)
+                .bind("eventId", eventId)
+                .bind("login", login)
+                .bind("participantRoleId", participantRoleId)
+                .bind("notAllowedRoleId", notAllowedRoleId)
+                .fetch()
+                .rowsUpdated()
+                .then();
     }
 
     public Flux<FullUser> searchUsersByNameSurnameEmail(Integer eventId, String searchText, Integer sequenceNumber) {
