@@ -9,6 +9,8 @@ import ru.eventorg.entity.PurchaseEntity;
 import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.exception.CannotDenyPurchaseException;
 import ru.eventorg.exception.ErrorState;
+import ru.eventorg.exception.PurchaseNotExistException;
+import ru.eventorg.repository.PurchaseEntityRepository;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -19,7 +21,7 @@ import static ru.eventorg.security.SecurityUtils.getCurrentUserLogin;
 public class MyPurchasesListService {
     private final DatabaseClient databaseClient;
     private final EventService eventService;
-    private final RoleService roleService;
+    private final PurchaseEntityRepository purchaseEntityRepository;
 
     private static final String GET_MY_PURCHASES_SQL = """
     SELECT p.purchase_id, p.purchase_name, p.purchase_description, p.cost,
@@ -52,19 +54,13 @@ public class MyPurchasesListService {
     RETURNING 1
     """;
 
-    private static final String FIND_PURCHASE = """
-    SELECT p.event_id
-    FROM purchase p
-    WHERE p.purchase_id = $1 
-      AND p.responsible_user = $2 
-      AND p.cost = 0
-    """;
 
 
-    public MyPurchasesListService(DatabaseClient databaseClient, EventService eventService, RoleService roleService) {
+
+    public MyPurchasesListService(DatabaseClient databaseClient, EventService eventService, PurchaseEntityRepository purchaseEntityRepository) {
         this.databaseClient = databaseClient;
         this.eventService = eventService;
-        this.roleService = roleService;
+        this.purchaseEntityRepository = purchaseEntityRepository;
     }
 
 
@@ -83,19 +79,19 @@ public class MyPurchasesListService {
     public Mono<Void> denyPurchaseInMyPurchasesList(Integer purchaseId) {
         return getCurrentUserLogin()
                 .flatMap(userLogin ->
-                        databaseClient.sql(FIND_PURCHASE)
-                                .bind(0, purchaseId)
-                                .bind(1, userLogin)
-                                .fetch()
-                                .one()
-                                .switchIfEmpty(Mono.error(new CannotDenyPurchaseException(ErrorState.CANNOT_DENY_PURCHASE)))
-                                .flatMap(row -> {
-                                    Integer eventId = (Integer) row.get("event_id");
-                                    return eventService.validateEventIsActive(eventId)
-                                            .then(databaseClient.sql(DENY_PURCHASE_SQL)
-                                                    .bind(0, purchaseId)
-                                                    .bind(1, userLogin)
-                                                    .then());
+                        purchaseEntityRepository.findByPurchaseIdAndResponsibleUser(purchaseId, userLogin)
+                                .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
+                                .flatMap(purchase -> {
+                                    if (purchase.getCost().compareTo(BigDecimal.ZERO) != 0) {
+                                        return Mono.error(new CannotDenyPurchaseException(ErrorState.CANNOT_DENY_PURCHASE));
+                                    }
+                                    return eventService.validateEventIsActive(purchase.getEventId())
+                                            .then(
+                                                    databaseClient.sql(DENY_PURCHASE_SQL)
+                                                            .bind(0, purchaseId)
+                                                            .bind(1, userLogin)
+                                                            .then()
+                                            );
                                 })
                 );
     }

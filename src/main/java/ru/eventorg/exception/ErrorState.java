@@ -126,7 +126,7 @@ public enum ErrorState {
 
     CANNOT_DENY_PURCHASE(
             HttpStatus.FORBIDDEN,
-            "Покупке уже добавлена стоимость или вы не являетесь ответственным за эту покупку"
+            "Покупке уже добавлена стоимость"
     );
 
     private final HttpStatus statusCode;

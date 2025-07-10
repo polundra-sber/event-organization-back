@@ -12,6 +12,7 @@ public interface PurchaseEntityRepository extends R2dbcRepository<PurchaseEntity
     Flux<PurchaseEntity> getPurchaseEntitiesByEventId(Integer eventId);
     Mono<Void> deleteByPurchaseIdAndEventId(Integer purchaseId, Integer eventId);
     Mono<PurchaseEntity> findByPurchaseIdAndEventId(Integer purchaseId, Integer eventId);
+    Mono<PurchaseEntity> findByPurchaseIdAndResponsibleUser(Integer purchaseId, String responsibleUser);
     Mono<Boolean> existsPurchaseEntityByPurchaseIdAndEventId(Integer purchaseId, Integer eventId);
 }
 
