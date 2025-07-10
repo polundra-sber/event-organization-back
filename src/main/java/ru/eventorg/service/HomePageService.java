@@ -139,7 +139,7 @@ public class HomePageService {
                     JOIN event_status es ON e.status_id = es.event_status_id
                     JOIN role r ON eul.role_id = r.role_id
                     WHERE eul.user_id = :userId
-                    AND r.role_name != 'Не допущен'
+                    AND r.role_name != 'не допущен'
                     AND e.status_id in (1,2)
                     """;
 
