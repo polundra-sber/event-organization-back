@@ -47,12 +47,11 @@ public class EventService {
     }
 
     public Mono<Void> validateExists(Integer eventId) {
-        return eventEntityRepository.existsById(eventId)
+        return eventEntityRepository.existsActiveOrCompletedEvent(eventId)
                 .flatMap(exists -> exists
                         ? Mono.empty()
                         : Mono.error(new EventNotExistException(ErrorState.EVENT_NOT_EXIST)));
     }
-
 
     public Mono<EventEntity> getActiveOrCompletedEvent(Integer eventId) {
         return eventEntityRepository.getActiveOrCompletedEventById(eventId)

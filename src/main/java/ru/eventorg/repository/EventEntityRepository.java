@@ -26,6 +26,13 @@ public interface EventEntityRepository extends R2dbcRepository<EventEntity, Inte
     Mono<Boolean> existsActiveEventById(@Param("eventId") Integer eventId);
 
     @Query("""
+    SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END
+    FROM event e
+    WHERE e.event_id = :eventId AND e.status_id != 3
+    """)
+    Mono<Boolean> existsActiveOrCompletedEvent(@Param("eventId") Integer eventId);
+
+    @Query("""
     SELECT cost_allocated
     FROM event
     WHERE event_id = :eventId
