@@ -21,7 +21,6 @@ import ru.eventorg.service.*;
 
 import java.util.List;
 
-// TODO сделать на всех контроллерах проверку статуса мероприятия
 @RestController
 @RequiredArgsConstructor
 public class CostAllocationListController implements CostAllocationListApi {
