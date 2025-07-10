@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 import ru.eventorg.dto.DebtIncomesCustom;
 import ru.eventorg.exception.*;
 import ru.eventorg.repository.DebtEntityRepository;
+import ru.eventorg.repository.DebtStatusEntityRepository;
 import ru.eventorg.repository.EventEntityRepository;
 import ru.eventorg.security.SecurityUtils;
 
@@ -18,7 +19,8 @@ import ru.eventorg.security.SecurityUtils;
 public class MyIncomesService {
     private final R2dbcEntityTemplate template;
     private final DebtEntityRepository debtEntityRepository;
-    private final EventEntityRepository eventEntityRepository;
+    private final EventService eventService;
+    private final DebtStatusEntityRepository debtStatusEntityRepository;
 
     public Flux<DebtIncomesCustom> getDebtIncomesCustom() {
         return SecurityUtils.getCurrentUserLogin()
@@ -35,9 +37,9 @@ public class MyIncomesService {
                                 d.debt_amount
                             FROM debt d
                                      JOIN event e ON e.event_id = d.event_id
-                                     JOIN user_profile up ON up.login = d.payer_id
+                                     JOIN user_profile up ON up.login = d.recipient_id
                                      JOIN debt_status ds ON d.status_id = ds.debt_status_id
-                            WHERE d.payer_id = 'polikpolik'
+                            WHERE d.recipient_id = :login
                         """;
                     return template.getDatabaseClient()
                             .sql(query)
@@ -62,12 +64,17 @@ public class MyIncomesService {
 
     public Mono<Void> markIncomeReceived(Integer debtId) {
         return SecurityUtils.getCurrentUserLogin()
-                .flatMap(login -> validateDebtExists(debtId)
-                        .then(validateDebtRecipient(debtId, login))
-                        .then(validateEventIsActiveForDebt(debtId))
-                        .then(debtEntityRepository.updateDebtStatus(debtId, 3))
-                        .then()
-                );
+                .flatMap(login ->
+                        validateDebtExists(debtId)
+                                .then(validateDebtRecipient(debtId, login))
+                                .then(eventService.validateEventIsActiveForDebt(debtId))
+                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName("Получено")
+                                        .flatMap(paidStatus ->
+                                                debtEntityRepository.updateDebtStatus(debtId, paidStatus.getDebtStatusId())
+                                        )
+                                )
+                )
+                .then();
     }
 
 
@@ -84,14 +91,5 @@ public class MyIncomesService {
                 .flatMap(isResponsible -> isResponsible
                         ? Mono.empty()
                         : Mono.error(new UserNotRecipientException(ErrorState.NOT_RECIPIENT)));
-    }
-
-
-    private Mono<Void> validateEventIsActiveForDebt(Integer debtId) {
-        return debtEntityRepository.findEventIdByDebtId(debtId)
-                .flatMap(eventEntityRepository::existsActiveEventById)
-                .flatMap(isActive -> isActive
-                        ? Mono.empty()
-                        : Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE)));
     }
 }
