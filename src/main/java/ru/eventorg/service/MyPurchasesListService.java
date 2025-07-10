@@ -43,11 +43,11 @@ public class MyPurchasesListService {
     JOIN event_status es ON e.status_id = es.event_status_id
     LEFT JOIN user_profile up ON p.responsible_user = up.login
     WHERE eul.user_id = $1
-      AND es.event_status_name = 'Активно'
+      AND es.event_status_name = 'активно'
       AND (
-          (r.role_name IN ('Создатель', 'Организатор'))
+          (r.role_name IN ('создатель', 'организатор'))
           OR
-          (r.role_name = 'Участник' AND p.responsible_user = $1)
+          (r.role_name = 'участник' AND p.responsible_user = $1)
       )
     """;
 

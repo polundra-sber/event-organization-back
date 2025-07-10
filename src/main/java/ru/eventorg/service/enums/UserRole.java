@@ -6,10 +6,10 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum UserRole {
-    CREATOR("Создатель"),
-    PARTICIPANT("Участник"),
-    ORGANIZER("Организатор"),
-    NOT_ALLOWED("Не допущен");
+    CREATOR("создатель"),
+    PARTICIPANT("участник"),
+    ORGANIZER("организатор"),
+    NOT_ALLOWED("не допущен");
 
     private final String displayName;
 }
