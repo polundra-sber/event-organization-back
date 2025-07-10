@@ -1,6 +1,7 @@
 package ru.eventorg.repository;
 
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.repository.query.Param;
@@ -38,4 +39,12 @@ public interface EventEntityRepository extends R2dbcRepository<EventEntity, Inte
     WHERE event_id = :eventId
     """)
     Mono<Boolean> isEventCostAllocated(@Param("eventId") Integer eventId);
+
+    @Modifying
+    @Query("""
+    UPDATE event
+       SET cost_allocated = TRUE
+     WHERE event_id = :eventId
+    """)
+    Mono<Integer> markCostAllocated(@Param("eventId") Integer eventId);
 }

@@ -15,7 +15,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.security.SecurityUtils;
-import ru.eventorg.service.*;
+import ru.eventorg.service.ParticipantsListService;
+import ru.eventorg.service.RoleService;
+import ru.eventorg.service.EventService;
 
 import java.util.List;
 
