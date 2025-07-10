@@ -46,7 +46,7 @@ public class ParticipantsListController implements ParticipantsListApi {
             @Parameter(name = "event_id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("event_id") Integer eventId,
             @Valid @RequestBody Mono<List<String>> requestBody,
             @Parameter(hidden = true) final ServerWebExchange exchange) throws Exception {
-        return eventValidationService.validateExists(eventId)
+        return eventValidationService.validateEventIsActive(eventId)
                 .then(SecurityUtils.getCurrentUserLogin()
                         .flatMap(login ->
                                 roleService.checkIfCreator(eventId, login)
