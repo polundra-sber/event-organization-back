@@ -194,7 +194,7 @@ public class HomePageService {
         event.setEventDescription(readable.get("event_description", String.class));
         event.setLocation(readable.get("location", String.class));
         event.setEventDate(readable.get("event_date", LocalDate.class));
-        event.setEventTime(Objects.requireNonNull(readable.get("event_time", LocalTime.class)));
+        event.setEventTime(readable.get("event_time", LocalTime.class));
         event.setChatLink(readable.get("chat_link", String.class));
         event.setStatus(readable.get("event_status_name", String.class));
         event.setRole(readable.get("role_name", String.class));
