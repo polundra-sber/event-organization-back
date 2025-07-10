@@ -1190,7 +1190,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  cost-allocation-list:
+                  cost_allocation_list:
                     type: array
                     items:
                       $ref: '#/components/schemas/CostAllocationListItem'
@@ -1317,9 +1317,19 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MyPurchaseListItem'
+                type: object
+                properties:
+                  user_login:
+                    type: string
+                    description: login пользователя, получающего список
+                  purchases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MyPurchaseListItem'
+                required:
+                  - user_login
+                  - purchases
+
 
 
   /my-purchases-list/{purchase_id}/deny-purchase:
