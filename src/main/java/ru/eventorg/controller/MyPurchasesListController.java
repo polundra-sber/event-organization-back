@@ -39,7 +39,8 @@ public class MyPurchasesListController implements MyPurchasesApi {
 
     @Override
     public Mono<ResponseEntity<Void>> editPurchaseCostInMyPurchasesList(Integer purchaseId, Mono<EditPurchaseCostInMyPurchasesListRequest> editPurchaseCostInMyPurchasesListRequest, ServerWebExchange exchange) throws Exception {
-        return MyPurchasesApi.super.editPurchaseCostInMyPurchasesList(purchaseId, editPurchaseCostInMyPurchasesListRequest, exchange);
+        return myPurchasesListService.editPurchaseCostInMyPurchasesList(purchaseId, editPurchaseCostInMyPurchasesListRequest)
+                .thenReturn(ResponseEntity.ok().build());
     }
 
     @Override

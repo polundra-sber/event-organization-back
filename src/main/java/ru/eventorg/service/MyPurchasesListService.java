@@ -1,5 +1,6 @@
 package ru.eventorg.service;
 
+import org.openapitools.model.EditPurchaseCostInMyPurchasesListRequest;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -11,6 +12,7 @@ import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.exception.CannotDenyPurchaseException;
 import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.PurchaseNotExistException;
+import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.PurchaseEntityRepository;
 
 import java.math.BigDecimal;
@@ -24,6 +26,7 @@ public class MyPurchasesListService {
     private final DatabaseClient databaseClient;
     private final EventService eventService;
     private final PurchaseEntityRepository purchaseEntityRepository;
+    private final RoleService roleService;
 
     private static final String GET_MY_PURCHASES_SQL = """
     SELECT p.purchase_id, p.purchase_name, p.purchase_description, p.cost,
@@ -59,10 +62,11 @@ public class MyPurchasesListService {
 
 
 
-    public MyPurchasesListService(DatabaseClient databaseClient, EventService eventService, PurchaseEntityRepository purchaseEntityRepository) {
+    public MyPurchasesListService(DatabaseClient databaseClient, EventService eventService, PurchaseEntityRepository purchaseEntityRepository, RoleService roleService) {
         this.databaseClient = databaseClient;
         this.eventService = eventService;
         this.purchaseEntityRepository = purchaseEntityRepository;
+        this.roleService = roleService;
     }
 
 
@@ -96,6 +100,38 @@ public class MyPurchasesListService {
                                                             .then()
                                             );
                                 })
+                );
+    }
+
+    public Mono<Void> editPurchaseCostInMyPurchasesList(
+            Integer purchaseId,
+            Mono<EditPurchaseCostInMyPurchasesListRequest> editPurchaseCostInMyPurchasesListRequest) {
+
+        return getCurrentUserLogin()
+                .flatMap(userLogin ->
+                        purchaseEntityRepository.findById(purchaseId)
+                                .switchIfEmpty(Mono.error(new PurchaseNotExistException(ErrorState.PURCHASE_NOT_EXIST)))
+                                .flatMap(purchase ->
+                                        eventService.validateEventIsActive(purchase.getEventId())
+                                                .then(Mono.defer(() ->
+                                                        purchaseEntityRepository.existsByPurchaseIdAndResponsibleUser(purchase.getPurchaseId(), userLogin)
+                                                                .flatMap(isResponsible -> isResponsible
+                                                                        ? Mono.just(true)
+                                                                        : roleService.checkIfOrganizerOrHigher(purchase.getEventId(), userLogin)
+                                                                        .onErrorReturn(false))
+                                                ))
+                                                .filter(allowed -> allowed)
+                                                .switchIfEmpty(Mono.error(new WrongUserRoleException(ErrorState.NOT_CREATOR_OR_ORGANIZER_ROLE)))
+                                                .then(editPurchaseCostInMyPurchasesListRequest
+                                                        .map(request -> request.getCost() != null
+                                                                ? BigDecimal.valueOf(request.getCost())
+                                                                : BigDecimal.ZERO)
+                                                        .flatMap(newCost -> {
+                                                            purchase.setCost(newCost);
+                                                            return purchaseEntityRepository.save(purchase).then();
+                                                        })
+                                                )
+                                )
                 );
     }
 
