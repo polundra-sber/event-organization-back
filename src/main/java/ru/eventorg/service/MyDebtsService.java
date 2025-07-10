@@ -14,6 +14,7 @@ import ru.eventorg.repository.DebtEntityRepository;
 import ru.eventorg.repository.DebtStatusEntityRepository;
 import ru.eventorg.repository.EventEntityRepository;
 import ru.eventorg.security.SecurityUtils;
+import ru.eventorg.service.enums.DebtStatus;
 
 @Service
 @AllArgsConstructor
@@ -74,7 +75,7 @@ public class MyDebtsService {
                         validateDebtExists(debtId)
                                 .then(validateDebtPayer(debtId, login))
                                 .then(eventService.validateEventIsActiveForDebt(debtId))
-                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName("оплачено")
+                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName(DebtStatus.PAID.getDisplayName())
                                         .flatMap(paidStatus ->
                                                 debtEntityRepository.updateDebtStatus(debtId, paidStatus.getDebtStatusId())
                                         )

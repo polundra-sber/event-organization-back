@@ -10,6 +10,7 @@ import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.UserNotPurchaseParticipantException;
 import ru.eventorg.repository.EventEntityRepository;
 import ru.eventorg.repository.PayerEntityRepository;
+import ru.eventorg.service.enums.DebtStatus;
 
 import java.util.List;
 
@@ -115,7 +116,7 @@ public class CostAllocationListService {
 
         return template.getDatabaseClient()
                 .sql("SELECT debt_status_id FROM debt_status WHERE debt_status_name = :name")
-                .bind("name", "не оплачено")
+                .bind("name", DebtStatus.NOT_PAID.getDisplayName())
                 .map((row, meta) -> row.get("debt_status_id", Integer.class))
                 .one()
                 .flatMap(statusId ->

@@ -13,6 +13,7 @@ import ru.eventorg.repository.DebtEntityRepository;
 import ru.eventorg.repository.DebtStatusEntityRepository;
 import ru.eventorg.repository.EventEntityRepository;
 import ru.eventorg.security.SecurityUtils;
+import ru.eventorg.service.enums.DebtStatus;
 
 @Service
 @AllArgsConstructor
@@ -68,7 +69,7 @@ public class MyIncomesService {
                         validateDebtExists(debtId)
                                 .then(validateDebtRecipient(debtId, login))
                                 .then(eventService.validateEventIsActiveForDebt(debtId))
-                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName("получено")
+                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName(DebtStatus.RECEIVED.getDisplayName())
                                         .flatMap(paidStatus ->
                                                 debtEntityRepository.updateDebtStatus(debtId, paidStatus.getDebtStatusId())
                                         )
