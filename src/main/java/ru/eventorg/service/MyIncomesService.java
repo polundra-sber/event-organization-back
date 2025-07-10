@@ -68,7 +68,7 @@ public class MyIncomesService {
                         validateDebtExists(debtId)
                                 .then(validateDebtRecipient(debtId, login))
                                 .then(eventService.validateEventIsActiveForDebt(debtId))
-                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName("Получено")
+                                .then(debtStatusEntityRepository.getDebtStatusEntityByDebtStatusName("получено")
                                         .flatMap(paidStatus ->
                                                 debtEntityRepository.updateDebtStatus(debtId, paidStatus.getDebtStatusId())
                                         )

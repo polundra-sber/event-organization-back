@@ -115,7 +115,7 @@ public class CostAllocationListService {
 
         return template.getDatabaseClient()
                 .sql("SELECT debt_status_id FROM debt_status WHERE debt_status_name = :name")
-                .bind("name", "Не оплачено")
+                .bind("name", "не оплачено")
                 .map((row, meta) -> row.get("debt_status_id", Integer.class))
                 .one()
                 .flatMap(statusId ->
