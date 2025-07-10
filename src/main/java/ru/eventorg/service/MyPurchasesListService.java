@@ -14,6 +14,7 @@ import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.PurchaseNotExistException;
 import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.PurchaseEntityRepository;
+import ru.eventorg.service.enums.EventStatus;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -43,7 +44,7 @@ public class MyPurchasesListService {
     JOIN event_status es ON e.status_id = es.event_status_id
     LEFT JOIN user_profile up ON p.responsible_user = up.login
     WHERE eul.user_id = $1
-      AND es.event_status_name = 'активно'
+      AND es.event_status_name = $2
       AND (
           (r.role_name IN ('создатель', 'организатор'))
           OR
@@ -75,6 +76,7 @@ public class MyPurchasesListService {
                 .flatMap(userLogin ->
                         databaseClient.sql(GET_MY_PURCHASES_SQL)
                                 .bind(0, userLogin)
+                                .bind(1, EventStatus.ACTIVE.getDisplayName())
                                 .fetch()
                                 .all()
                                 .flatMap(this::mapRowToMyPurchaseListItemCustom)

@@ -8,6 +8,7 @@ import ru.eventorg.dto.StuffWithEventDto;
 import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.StuffNotExistException;
 import ru.eventorg.repository.StuffEntityRepository;
+import ru.eventorg.service.enums.EventStatus;
 
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class MyStuffsListService {
         JOIN event e ON s.event_id = e.event_id
         JOIN event_status es ON e.status_id = es.event_status_id
         WHERE s.responsible_user = $1
-        AND es.event_status_name = 'активно'
+        AND es.event_status_name = $2
         """;
 
     private static final String DENY_STUFF_SQL = """
@@ -50,6 +51,7 @@ public class MyStuffsListService {
                 .flatMapMany(userLogin ->
                         databaseClient.sql(GET_STUFFS_WITH_EVENTS_SQL)
                                 .bind(0, userLogin)
+                                .bind(1, EventStatus.ACTIVE.getDisplayName())
                                 .fetch()
                                 .all()
                                 .flatMap(this::mapRowToStuffWithEventDto)
