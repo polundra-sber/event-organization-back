@@ -21,6 +21,7 @@ import ru.eventorg.service.*;
 
 import java.util.List;
 
+// TODO сделать на всех контроллерах проверку статуса мероприятия
 @RestController
 @RequiredArgsConstructor
 public class CostAllocationListController implements CostAllocationListApi {
@@ -34,7 +35,7 @@ public class CostAllocationListController implements CostAllocationListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<CostAllocationListItem>>> getCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return eventService.validateExists(eventId)
+        return eventService.validateEventIsActive(eventId)
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
@@ -56,7 +57,7 @@ public class CostAllocationListController implements CostAllocationListApi {
 
     @Override
     public Mono<ResponseEntity<Flux<UserDemo>>> getParticipantsForPurchaseFromCostAllocationList(Integer eventId, Integer purchaseId, ServerWebExchange exchange) throws Exception {
-        return eventValidationService.validateExists(eventId)
+        return eventValidationService.validateEventIsActive(eventId)
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
@@ -77,7 +78,7 @@ public class CostAllocationListController implements CostAllocationListApi {
 
     @Override
     public Mono<ResponseEntity<Void>> sendCostAllocationList(Integer eventId, ServerWebExchange exchange) throws Exception {
-        return eventValidationService.validateExists(eventId)
+        return eventValidationService.validateEventIsActive(eventId)
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
@@ -107,7 +108,7 @@ public class CostAllocationListController implements CostAllocationListApi {
             @Valid @RequestBody Mono<List<String>> logins,
             ServerWebExchange exchange
     ) {
-        return eventValidationService.validateExists(eventId)
+        return eventValidationService.validateEventIsActive(eventId)
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
@@ -137,7 +138,7 @@ public class CostAllocationListController implements CostAllocationListApi {
             @Valid @RequestBody Mono<List<String>> logins,
             ServerWebExchange exchange
     ) {
-        return eventValidationService.validateExists(eventId)
+        return eventValidationService.validateEventIsActive(eventId)
                 .then(SecurityUtils.getCurrentUserLogin())
                 .flatMap(login ->
                         roleService.checkIfCreator(eventId, login)
