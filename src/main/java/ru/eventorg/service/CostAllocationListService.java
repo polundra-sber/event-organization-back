@@ -29,7 +29,7 @@ public class CostAllocationListService {
      * <ol>
      * <li> Получаем из purchase_with_payer_view все записи для заданного eventId</li>
      * <li> Агрегируем сумму переводов в каждом направлении</li>
-     * <li> Собираем зеркальные пары (payer+receiver и receiver+payer)</li>
+     * <li> Собираем зеркальные пары (payer+recipient и recipient+payer)</li>
      * <li> Рассчитываем суммы для "зеркальных" пар</li>
      * <li> Собираем остальные (непарные) записи</li>
      * <li> Объединяем оба набора</li>
@@ -41,7 +41,7 @@ public class CostAllocationListService {
      */
     public Mono<Void> allocateDebtsBetweenParticipants(Integer eventId) {
         final String sqlAllocateDebts = """
-                INSERT INTO debt (payer_id, receiver_id, debt_amount, event_id, status_id)
+                INSERT INTO debt (payer_id, recipient_id, debt_amount, event_id, status_id)
                 WITH filtered_events AS (
                     SELECT *
                     FROM purchase_with_payer_view
@@ -52,24 +52,24 @@ public class CostAllocationListService {
                      aggregated AS (
                          SELECT
                              payer,
-                             receiver,
+                             recipient,
                              SUM(cost) AS total_out
                          FROM filtered_events
-                         GROUP BY payer, receiver
+                         GROUP BY payer, recipient
                      ),
                 
                 -- 3)
                      paired AS (
                          SELECT
                              a.payer    AS p1,
-                             a.receiver AS r1,
+                             a.recipient AS r1,
                              a.total_out AS sum1,
                              b.total_out AS sum2
                          FROM aggregated a
                                   JOIN aggregated b
-                                       ON a.payer    = b.receiver
-                                           AND a.receiver = b.payer
-                         WHERE a.payer < a.receiver  -- чтобы обрабатывать каждую пару лишь один раз
+                                       ON a.payer    = b.recipient
+                                           AND a.recipient = b.payer
+                         WHERE a.payer < a.recipient  -- чтобы обрабатывать каждую пару лишь один раз
                      ),
                 
                 -- 4)
@@ -82,7 +82,7 @@ public class CostAllocationListService {
                              CASE
                                  WHEN sum1 > sum2 THEN p1
                                  ELSE r1
-                                 END AS receiver,
+                                 END AS recipient,
                              ABS(sum1 - sum2) AS net_amount
                          FROM paired
                          WHERE sum1 <> sum2        -- исключаем полностью взаимокомпенсированные пары
@@ -92,24 +92,24 @@ public class CostAllocationListService {
                      unpaired AS (
                          SELECT
                              payer,
-                             receiver,
+                             recipient,
                              total_out AS net_amount
                          FROM aggregated a
                          WHERE NOT EXISTS (
                              SELECT 1
                              FROM aggregated b
-                             WHERE b.payer    = a.receiver
-                               AND b.receiver = a.payer
+                             WHERE b.payer    = a.recipient
+                               AND b.recipient = a.payer
                          )
                      )
                 
                 -- 6)
-                SELECT payer, receiver, net_amount, :eventId AS event_id, :statusId AS status_id
+                SELECT payer, recipient, net_amount, :eventId AS event_id, :statusId AS status_id
                 FROM paired_net
                 
                 UNION ALL
                 
-                SELECT payer, receiver, net_amount, :eventId AS event_id, :statusId AS status_id
+                SELECT payer, recipient, net_amount, :eventId AS event_id, :statusId AS status_id
                 FROM unpaired;
                 """;
 
