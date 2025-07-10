@@ -14,6 +14,7 @@ public class DebtCustom {
     private String recipientLogin;
     private String recipientName;
     private String recipientSurname;
+    private String commentMoneyTransfer;
     private String debtStatusName;
     private Float debtAmount;
 }

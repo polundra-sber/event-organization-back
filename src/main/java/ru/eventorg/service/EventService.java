@@ -10,6 +10,7 @@ import ru.eventorg.entity.EventEntity;
 import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.EventNotActiveException;
 import ru.eventorg.exception.EventNotExistException;
+import ru.eventorg.repository.DebtEntityRepository;
 import ru.eventorg.repository.EventEntityRepository;
 
 @Service
@@ -17,6 +18,7 @@ import ru.eventorg.repository.EventEntityRepository;
 public class EventService {
     private final EventEntityRepository eventEntityRepository;
     private final R2dbcEntityTemplate template;
+    private final DebtEntityRepository debtEntityRepository;
 
     private static final String SQL_GET_STATUS = """
         SELECT event_status.event_status_name
@@ -67,5 +69,13 @@ public class EventService {
 
     public Mono<Boolean> isCostAllocated(Integer eventId) {
         return eventEntityRepository.isEventCostAllocated(eventId);
+    }
+
+    public Mono<Void> validateEventIsActiveForDebt(Integer debtId) {
+        return debtEntityRepository.findEventIdByDebtId(debtId)
+                .flatMap(eventEntityRepository::existsActiveEventById)
+                .flatMap(isActive -> isActive
+                        ? Mono.empty()
+                        : Mono.error(new EventNotActiveException(ErrorState.EVENT_NOT_ACTIVE)));
     }
 }
