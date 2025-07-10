@@ -36,7 +36,8 @@ public class ParticipantsListService {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMapMany(login -> roleService.getUserRoleInEvent(eventId, login)
                         .flatMapMany(currentUserRole -> {
-                            boolean showAll = "создатель".equalsIgnoreCase(currentUserRole);
+                            boolean showAll = UserRole.CREATOR.getDisplayName()
+                                    .equalsIgnoreCase(currentUserRole);
                             String sql = """
                     SELECT
                         eul.user_id AS login,
@@ -122,9 +123,9 @@ public class ParticipantsListService {
                         roleEntityRepository.findById(entry.getRoleId())
                                 .map(role -> {
                                     String roleName = role.getRoleName();
-                                    return roleName.equals("участник") ||
-                                            roleName.equals("создатель") ||
-                                            roleName.equals("организатор");
+                                    return roleName.equals(UserRole.PARTICIPANT.getDisplayName()) ||
+                                            roleName.equals(UserRole.CREATOR.getDisplayName()) ||
+                                            roleName.equals(UserRole.ORGANIZER.getDisplayName());
                                 })
                 )
                 .defaultIfEmpty(false);

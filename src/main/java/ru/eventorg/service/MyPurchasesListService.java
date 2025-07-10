@@ -15,7 +15,9 @@ import ru.eventorg.exception.PurchaseNotExistException;
 import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.PurchaseEntityRepository;
 import ru.eventorg.service.enums.EventStatus;
+import ru.eventorg.service.enums.UserRole;
 
+import javax.management.relation.Role;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
@@ -46,9 +48,9 @@ public class MyPurchasesListService {
     WHERE eul.user_id = $1
       AND es.event_status_name = $2
       AND (
-          (r.role_name IN ('создатель', 'организатор'))
+          (r.role_name IN ($3, $4))
           OR
-          (r.role_name = 'участник' AND p.responsible_user = $1)
+          (r.role_name = $5 AND p.responsible_user = $1)
       )
     """;
 
@@ -77,6 +79,9 @@ public class MyPurchasesListService {
                         databaseClient.sql(GET_MY_PURCHASES_SQL)
                                 .bind(0, userLogin)
                                 .bind(1, EventStatus.ACTIVE.getDisplayName())
+                                .bind(2, UserRole.CREATOR.getDisplayName())
+                                .bind(3, UserRole.ORGANIZER.getDisplayName())
+                                .bind(4, UserRole.PARTICIPANT.getDisplayName())
                                 .fetch()
                                 .all()
                                 .flatMap(this::mapRowToMyPurchaseListItemCustom)
