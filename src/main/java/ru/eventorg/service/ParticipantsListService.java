@@ -51,7 +51,7 @@ public class ParticipantsListService {
                     JOIN user_secret us ON us.login = eul.user_id
                     JOIN role r ON r.role_id = eul.role_id
                     WHERE eul.event_id = $1
-                    """ + (showAll ? "" : " AND r.role_name != 'Не допущен'");
+                    """ + (showAll ? "" : " AND r.role_name != 'не допущен'");
 
                             return template.getDatabaseClient()
                                     .sql(sql)

@@ -30,7 +30,7 @@ public class MyStuffsListService {
         JOIN event e ON s.event_id = e.event_id
         JOIN event_status es ON e.status_id = es.event_status_id
         WHERE s.responsible_user = $1
-        AND es.event_status_name = 'Активно'
+        AND es.event_status_name = 'активно'
         """;
 
     private static final String DENY_STUFF_SQL = """
