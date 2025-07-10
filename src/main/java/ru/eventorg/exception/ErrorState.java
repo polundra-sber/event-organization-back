@@ -132,6 +132,11 @@ public enum ErrorState {
     STUFF_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,
             "Ответственный на вещь уже назначен"
+    ),
+
+    CANNOT_DENY_PURCHASE(
+            HttpStatus.FORBIDDEN,
+            "Покупке уже добавлена стоимость"
     );
 
     private final HttpStatus statusCode;
