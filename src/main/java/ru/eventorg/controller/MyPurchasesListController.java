@@ -2,7 +2,9 @@ package ru.eventorg.controller;
 
 import org.openapitools.api.MyPurchasesApi;
 import org.openapitools.model.EditPurchaseCostInMyPurchasesListRequest;
+import org.openapitools.model.GetMyPurchasesList200Response;
 import org.openapitools.model.MyPurchaseListItem;
+import org.openapitools.model.TaskListItem;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,9 +12,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.dto.MyPurchaseListItemCustom;
+import ru.eventorg.dto.MyPurchasesListResponse;
 import ru.eventorg.service.MyPurchasesListService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class MyPurchasesListController implements MyPurchasesApi {
@@ -39,15 +43,24 @@ public class MyPurchasesListController implements MyPurchasesApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<MyPurchaseListItem>>> getMyPurchasesList(ServerWebExchange exchange) throws Exception {
+    public Mono<ResponseEntity<GetMyPurchasesList200Response>> getMyPurchasesList(ServerWebExchange exchange) throws Exception {
         return myPurchasesListService.getMyPurchasesList()
-                .map(this::convertoMyPurchaseListItemCustomToMyPurchaseListItem)
-                .collectList()
-                .map(list-> ResponseEntity.ok(Flux.fromIterable(list)));
+                .flatMap(response -> {
+                    // Преобразуем каждый элемент списка покупок
+                    List<MyPurchaseListItem> items = response.getMyPurchasesList().stream()
+                            .map(this::convertToMyPurchaseListItem)
+                            .collect(Collectors.toList());
+
+                    // Создаем ответ
+                    GetMyPurchasesList200Response apiResponse = new GetMyPurchasesList200Response();
+                    apiResponse.setUserLogin(response.getUserLogin());
+                    apiResponse.setPurchases(items);
+
+                    return Mono.just(ResponseEntity.ok(apiResponse));
+                });
     }
 
-    // Вспомогательные методы
-    private MyPurchaseListItem convertoMyPurchaseListItemCustomToMyPurchaseListItem(MyPurchaseListItemCustom customItem) {
+    private MyPurchaseListItem convertToMyPurchaseListItem(MyPurchaseListItemCustom customItem) {
         return new MyPurchaseListItem()
                 .eventId(customItem.getPurchase().getEventId())
                 .eventName(customItem.getEventName())
@@ -60,6 +73,5 @@ public class MyPurchasesListController implements MyPurchasesApi {
                 .purchaseDescription(customItem.getPurchase().getPurchaseDescription())
                 .hasReceipt(customItem.getHasReceipt());
     }
-
 
 }

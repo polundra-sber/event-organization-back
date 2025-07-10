@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.dto.MyPurchaseListItemCustom;
+import ru.eventorg.dto.MyPurchasesListResponse;
 import ru.eventorg.entity.PurchaseEntity;
 import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.exception.CannotDenyPurchaseException;
@@ -13,6 +14,7 @@ import ru.eventorg.exception.PurchaseNotExistException;
 import ru.eventorg.repository.PurchaseEntityRepository;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
 
 import static ru.eventorg.security.SecurityUtils.getCurrentUserLogin;
@@ -64,16 +66,17 @@ public class MyPurchasesListService {
     }
 
 
-    public Flux<MyPurchaseListItemCustom> getMyPurchasesList() {
+    public Mono<MyPurchasesListResponse> getMyPurchasesList() {
         return getCurrentUserLogin()
-                .flatMapMany(userLogin ->
+                .flatMap(userLogin ->
                         databaseClient.sql(GET_MY_PURCHASES_SQL)
                                 .bind(0, userLogin)
                                 .fetch()
                                 .all()
                                 .flatMap(this::mapRowToMyPurchaseListItemCustom)
-                                .switchIfEmpty(Flux.empty())
-                );
+                                .collectList()
+                                .map(purchases -> new MyPurchasesListResponse(userLogin, purchases))
+                                .switchIfEmpty(Mono.just(new MyPurchasesListResponse(null, Collections.emptyList()))));
     }
 
     public Mono<Void> denyPurchaseInMyPurchasesList(Integer purchaseId) {
