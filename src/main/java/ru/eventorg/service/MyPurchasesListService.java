@@ -1,35 +1,53 @@
 package ru.eventorg.service;
 
+import lombok.RequiredArgsConstructor;
 import org.openapitools.model.EditPurchaseCostInMyPurchasesListRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import ru.eventorg.dto.MyPurchaseListItemCustom;
 import ru.eventorg.dto.MyPurchasesListResponse;
 import ru.eventorg.entity.PurchaseEntity;
+import ru.eventorg.entity.ReceiptEntity;
+import ru.eventorg.entity.ReceiptListEntity;
 import ru.eventorg.entity.UserProfileEntity;
 import ru.eventorg.exception.CannotDenyPurchaseException;
 import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.PurchaseNotExistException;
 import ru.eventorg.exception.WrongUserRoleException;
 import ru.eventorg.repository.PurchaseEntityRepository;
+import ru.eventorg.repository.ReceiptEntityRepository;
+import ru.eventorg.repository.ReceiptListEntityRepository;
 import ru.eventorg.service.enums.EventStatus;
 import ru.eventorg.service.enums.UserRole;
 
 import javax.management.relation.Role;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 import static ru.eventorg.security.SecurityUtils.getCurrentUserLogin;
 
 @Service
+@RequiredArgsConstructor
 public class MyPurchasesListService {
     private final DatabaseClient databaseClient;
     private final EventService eventService;
     private final PurchaseEntityRepository purchaseEntityRepository;
     private final RoleService roleService;
+    private final ReceiptEntityRepository receiptEntityRepository;
+    private final ReceiptListEntityRepository receiptListEntityRepository;
+
+    @Value("${app.receipts.dir:/var/app/receipts}")
+    private String receiptsDir;
 
     private static final String GET_MY_PURCHASES_SQL = """
     SELECT p.purchase_id, p.purchase_name, p.purchase_description, p.cost,
@@ -61,17 +79,6 @@ public class MyPurchasesListService {
     AND cost = 0
     RETURNING 1
     """;
-
-
-
-
-    public MyPurchasesListService(DatabaseClient databaseClient, EventService eventService, PurchaseEntityRepository purchaseEntityRepository, RoleService roleService) {
-        this.databaseClient = databaseClient;
-        this.eventService = eventService;
-        this.purchaseEntityRepository = purchaseEntityRepository;
-        this.roleService = roleService;
-    }
-
 
     public Mono<MyPurchasesListResponse> getMyPurchasesList() {
         return getCurrentUserLogin()
@@ -165,6 +172,41 @@ public class MyPurchasesListService {
                 hasReceipt,
                 eventName
         ));
+    }
+
+    public Mono<Void> storeReceipts(Integer purchaseId, Flux<FilePart> fileParts) {
+        return fileParts
+                .flatMap(part -> {
+                    String original = part.filename();
+                    String ext = "";
+                    int dot = original.lastIndexOf('.');
+                    if (dot > 0) {
+                        ext = original.substring(dot);
+                    }
+
+                    String filename = UUID.randomUUID().toString() + ext;
+                    Path targetDir = Paths.get(receiptsDir, String.valueOf(purchaseId));
+                    Path targetFile = targetDir.resolve(filename);
+
+                    // Переносим создание директорий и сохранение файла в boundedElastic
+                    return Mono.fromCallable(() -> {
+                                if (!Files.exists(targetDir)) {
+                                    Files.createDirectories(targetDir); // блокирующий вызов
+                                }
+                                return targetFile;
+                            })
+                            .subscribeOn(Schedulers.boundedElastic()) // выполняем в отдельном потоке
+                            .flatMap(path ->
+                                    part.transferTo(path)
+                                            .then(receiptEntityRepository.save(new ReceiptEntity(null, path.toString())))
+                                            .flatMap(savedReceipt ->
+                                                    receiptListEntityRepository.save(
+                                                            new ReceiptListEntity(null, purchaseId, savedReceipt.getReceiptId())
+                                                    )
+                                            )
+                            );
+                })
+                .then();
     }
 }
 

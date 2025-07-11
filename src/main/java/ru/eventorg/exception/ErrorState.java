@@ -89,6 +89,10 @@ public enum ErrorState {
             "Нельзя поменять роль создателя"
     ),
 
+    WRONG_FILE_FORMAT(
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+            "Неверный формат чека"
+    ),
 
     PURCHASE_ALREADY_HAS_RESPONSIBLE(
             HttpStatus.FORBIDDEN,

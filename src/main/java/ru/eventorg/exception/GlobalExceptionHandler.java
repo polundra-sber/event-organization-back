@@ -125,7 +125,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(PurchaseNullResponsibleException.class)
     public ResponseEntity<String> handlePurchaseNullResponsibleException(PurchaseNullResponsibleException ex) {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
@@ -139,6 +139,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CannotDenyPurchaseException.class)
     public ResponseEntity<String> handleCannotDenyPurchaseException(CannotDenyPurchaseException ex) {
+        String response = ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(WrongFileFormatException.class)
+    public ResponseEntity<String> handleWrongFileFormatException(WrongFileFormatException ex) {
         String response = ex.getMessage();
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
