@@ -1,6 +1,7 @@
 package ru.eventorg.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openapitools.api.MyPurchasesApi;
 import org.openapitools.model.EditPurchaseCostInMyPurchasesListRequest;
 import org.openapitools.model.GetMyPurchasesList200Response;
@@ -11,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -28,21 +29,27 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class MyPurchasesListController implements MyPurchasesApi {
     private final MyPurchasesListService myPurchasesListService;
     private final PurchaseValidationService purchaseValidationService;
 
-    @Override
-    public Mono<ResponseEntity<Void>> addReceiptForPurchaseInMyPurchasesList(Integer purchaseId, List<Flux<Part>> files, ServerWebExchange exchange) throws Exception {
-        Flux<FilePart> fileParts = Flux.fromIterable(files)
-                .flatMap(flux -> flux)
-                .filter(part -> part instanceof FilePart)
-                .cast(FilePart.class)
+
+    @RequestMapping(
+            method = RequestMethod.POST,
+            value = "/my-purchases-list/{purchase_id}/add-receipt",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public Mono<ResponseEntity<Void>> addReceiptForPurchaseInMyPurchasesList(
+            @PathVariable("purchase_id") Integer purchaseId,
+            @RequestPart("files") Flux<FilePart> fileParts,
+            ServerWebExchange exchange
+    ) {
+        Flux<FilePart> validated = fileParts
                 .handle((part, sink) -> {
-                    // проверяем MimeType
-                    MediaType contentType = part.headers().getContentType();
-                    if (MediaType.IMAGE_JPEG.equals(contentType) ||
-                            MediaType.IMAGE_PNG.equals(contentType)) {
+                    MediaType ct = part.headers().getContentType();
+                    if (MediaType.IMAGE_JPEG.equals(ct) || MediaType.IMAGE_PNG.equals(ct)) {
                         sink.next(part);
                     } else {
                         sink.error(new WrongFileFormatException(ErrorState.WRONG_FILE_FORMAT));
@@ -50,8 +57,8 @@ public class MyPurchasesListController implements MyPurchasesApi {
                 });
 
         return purchaseValidationService.purchaseExists(purchaseId)
-                .thenMany(fileParts)
-                .transform(fp -> myPurchasesListService.storeReceipts(purchaseId, fp))
+                .thenMany(validated)
+                .as(fpFlux -> myPurchasesListService.storeReceipts(purchaseId, fpFlux))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()));
     }
 

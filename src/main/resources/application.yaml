@@ -22,3 +22,9 @@ logging:
       springframework:
         data:
           r2dbc: DEBUG
+        web:
+          filter: TRACE
+          client: TRACE
+          server: TRACE
+          reactive: TRACE
+        security: TRACE
