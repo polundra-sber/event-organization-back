@@ -155,24 +155,29 @@ public class CostListController implements CostListApi {
                 .thenMany(costListService.getReceiptResources(eventId, purchaseId))
                 .collectList()
                 .flatMap(resources -> {
-                    if (resources.isEmpty()) {
-                        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+                    MultipartBodyBuilder builder = new MultipartBodyBuilder();
 
-                        MultiValueMap<String, HttpEntity<Resource>> multipart =
+                    if (resources.isEmpty()) {
+                        MultiValueMap<String, HttpEntity<Resource>> empty =
                                 (MultiValueMap<String, HttpEntity<Resource>>) (MultiValueMap<?, ?>) builder.build();
 
                         return Mono.just(ResponseEntity
                                 .status(HttpStatus.NOT_FOUND)
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                                .body(multipart));
+                                .body(empty));
                     }
 
-                    MultipartBodyBuilder builder = new MultipartBodyBuilder();
                     for (Resource res : resources) {
+                        String filename = res.getFilename();
+                        String mediaType = MediaType.IMAGE_JPEG_VALUE;
+                        if (filename != null && filename.toLowerCase().endsWith(".png")) {
+                            mediaType = MediaType.IMAGE_PNG_VALUE;
+                        }
+
                         builder.part("file", res)
                                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                                        "form-data; name=\"file\"; filename=\"" + res.getFilename() + "\"")
-                                .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE);
+                                        "form-data; name=\"file\"; filename=\"" + filename + "\"")
+                                .header(HttpHeaders.CONTENT_TYPE, mediaType);
                     }
 
                     MultiValueMap<String, HttpEntity<Resource>> multipart =
