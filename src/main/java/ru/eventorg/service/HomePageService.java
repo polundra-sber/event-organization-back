@@ -93,7 +93,6 @@ public class HomePageService {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username ->
                         eventService.validateExists(eventId)
-                                .then(eventService.validateEventIsActive(eventId))
                                 .then(roleService.validateIsParticipant(eventId, username))
                                 .then(Mono.defer(() -> {
                                     String query = """
