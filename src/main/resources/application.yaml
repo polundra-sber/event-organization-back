@@ -1,18 +1,34 @@
 server:
   port: 8081
 
-jwt:
-  secret: my-ultra-secure-secret-key-1234567890
-  expiration:
-    ms: 86400000
-
 spring:
+  application:
+    name: event-organization-app
+
+  config:
+    import: vault://
+
+  cloud:
+    vault:
+      uri: http://localhost:8200
+      authentication: token
+      token: root
+      kv:
+        enabled: true
+        backend: secret
+        default-context: event-organization-app
+
   r2dbc:
     url: r2dbc:postgresql://localhost:8083/event_organization
-    username: event_user
-    password: event_password
+    username: ${db.username}
+    password: ${db.password}
     pool:
       enabled: true
+
+jwt:
+  secret: ${jwt.secret}
+  expiration:
+    ms: ${jwt.expiration.ms:86400000}
 
 logging:
   level:
