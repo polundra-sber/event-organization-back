@@ -12,6 +12,11 @@ public enum ErrorState {
             "Пользователь указал неверный логин или пароль"
     ),
 
+    INVALID_TOKEN(
+            HttpStatus.UNAUTHORIZED,
+            "Истекший или неверный JWT токен"
+    ),
+
     EVENT_NOT_EXIST(
             HttpStatus.NOT_FOUND,
             "Мероприятие с данным идентификатором не найдено"

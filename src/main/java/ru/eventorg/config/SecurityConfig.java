@@ -61,13 +61,13 @@ public class SecurityConfig {
                 return jwtTokenUtil.validateToken(token)
                         .flatMap(valid -> {
                             if (!valid) {
-                                return Mono.error(new BadCredentialsException(ErrorState.BAD_CREDENTIALS));
+                                return Mono.error(new BadCredentialsException(ErrorState.INVALID_TOKEN));
                             }
                             try {
                                 String username = jwtTokenUtil.extractUsername(token);
                                 return Mono.just(new UsernamePasswordAuthenticationToken(username, null));
                             } catch (Exception e) {
-                                return Mono.error(new BadCredentialsException(ErrorState.BAD_CREDENTIALS));
+                                return Mono.error(new BadCredentialsException(ErrorState.INVALID_TOKEN));
                             }
                         });
             }
