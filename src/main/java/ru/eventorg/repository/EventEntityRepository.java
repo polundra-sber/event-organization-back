@@ -9,6 +9,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.eventorg.entity.EventEntity;
 
+import java.time.LocalDate;
+import java.util.List;
+
 public interface EventEntityRepository extends R2dbcRepository<EventEntity, Integer> {
     Mono<EventEntity> getEventByEventId(Integer eventId);
     Mono<Boolean> existsEventEntityByEventId(Integer eventId);
@@ -47,4 +50,6 @@ public interface EventEntityRepository extends R2dbcRepository<EventEntity, Inte
      WHERE event_id = :eventId
     """)
     Mono<Integer> markCostAllocated(@Param("eventId") Integer eventId);
+
+    Flux<EventEntity> findByStatusIdInAndEventDateBefore(List<Integer> statusIds, LocalDate before);
 }

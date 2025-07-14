@@ -36,6 +36,7 @@ public class CostListController implements CostListApi {
     private final EventService eventValidationService;
     private final PurchaseValidationService purchaseValidationService;
     private final RoleService roleService;
+    private final ReceiptService receiptService;
 
     @Override
     public Mono<ResponseEntity<GetCostList200Response>> getCostList(Integer eventId, ServerWebExchange exchange) throws Exception {
@@ -115,7 +116,7 @@ public class CostListController implements CostListApi {
                         .flatMap(login ->
                                 roleService.validateIsParticipant(eventId, login)
                                         .thenReturn(login)))
-                .thenMany(costListService.getReceiptResources(eventId, purchaseId))
+                .thenMany(receiptService.getReceiptResources(eventId, purchaseId))
                 .collectList()
                 .flatMap(resources -> {
                     if (resources.isEmpty()) {
@@ -152,7 +153,7 @@ public class CostListController implements CostListApi {
                                                 .thenReturn(login)
                                 )
                 )
-                .thenMany(costListService.getReceiptResources(eventId, purchaseId))
+                .thenMany(receiptService.getReceiptResources(eventId, purchaseId))
                 .collectList()
                 .flatMap(resources -> {
                     MultipartBodyBuilder builder = new MultipartBodyBuilder();

@@ -23,6 +23,7 @@ import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.WrongFileFormatException;
 import ru.eventorg.service.MyPurchasesListService;
 import ru.eventorg.service.PurchaseValidationService;
+import ru.eventorg.service.ReceiptService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 public class MyPurchasesListController implements MyPurchasesApi {
     private final MyPurchasesListService myPurchasesListService;
     private final PurchaseValidationService purchaseValidationService;
-
+    private final ReceiptService receiptService;
 
     @RequestMapping(
             method = RequestMethod.POST,
@@ -58,7 +59,7 @@ public class MyPurchasesListController implements MyPurchasesApi {
 
         return purchaseValidationService.purchaseExists(purchaseId)
                 .thenMany(validated)
-                .as(fpFlux -> myPurchasesListService.storeReceipts(purchaseId, fpFlux))
+                .as(fpFlux -> receiptService.storeReceipts(purchaseId, fpFlux))
                 .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()));
     }
 
