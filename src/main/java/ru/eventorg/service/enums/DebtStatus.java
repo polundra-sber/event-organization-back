@@ -6,9 +6,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum DebtStatus {
-    NOT_PAID("не оплачено"),
-    PAID("оплачено"),
-    RECEIVED("получено");
+    NOT_PAID("не оплачен"),
+    PAID("оплачен"),
+    RECEIVED("получен");
 
     private final String displayName;
 }

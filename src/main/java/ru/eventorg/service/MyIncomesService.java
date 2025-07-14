@@ -38,7 +38,7 @@ public class MyIncomesService {
                                 d.debt_amount
                             FROM debt d
                                      JOIN event e ON e.event_id = d.event_id
-                                     JOIN user_profile up ON up.login = d.recipient_id
+                                     JOIN user_profile up ON up.login = d.payer_id
                                      JOIN debt_status ds ON d.status_id = ds.debt_status_id
                             WHERE d.recipient_id = :login
                         """;
