@@ -108,7 +108,7 @@ public class HomePageController implements HomePageApi {
         preview.setEventStatusName(entity.getStatus());
         preview.setLocation(entity.getLocation());
         preview.setEventDate(entity.getEventDate());
-        preview.setEventTime(entity.getEventTime().toString());
+        preview.setEventTime(entity.getEventTime() != null ? entity.getEventTime().toString() : null);
         return preview;
     }
 
