@@ -20,13 +20,13 @@ spring:
 
   r2dbc:
     url: r2dbc:postgresql://localhost:8083/event_organization
-    username: ${db.username}
-    password: ${db.password}
+    username: ${db.username:event_user}
+    password: ${db.password:event_password}
     pool:
       enabled: true
 
 jwt:
-  secret: ${jwt.secret}
+  secret: ${jwt.secret:my-ultra-secure-secret-key-1234567890}
   expiration:
     ms: ${jwt.expiration.ms:86400000}
 
