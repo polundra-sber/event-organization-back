@@ -1,18 +1,23 @@
 server:
   port: 8081
 
-jwt:
-  secret: my-ultra-secure-secret-key-1234567890
-  expiration:
-    ms: 86400000
-
 spring:
+  application:
+    name: event-organization-app
+  config:
+    import: optional:configtree:/run/secrets/
+
   r2dbc:
     url: r2dbc:postgresql://localhost:8083/event_organization
-    username: event_user
-    password: event_password
+    username: ${db_username}
+    password: ${db_password}
     pool:
       enabled: true
+
+jwt:
+  secret: ${jwt_secret:my-ultra-secure-secret-key-1234567890}
+  expiration:
+    ms: ${jwt_expiration_ms:86400000}
 
 logging:
   level:
