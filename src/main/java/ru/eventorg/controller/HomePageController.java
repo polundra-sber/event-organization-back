@@ -48,7 +48,7 @@ public class HomePageController implements HomePageApi {
         return eventEditor.flatMap(editor -> homePageService.editEvent(eventId, editor)
                 .flatMap(event -> {
                     EventEditor editorModel = toEventEditorModel(event);
-                    return Mono.just(ResponseEntity.status(HttpStatus.OK).body(editorModel));
+                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(editorModel));
                 }));
     }
 
@@ -84,7 +84,7 @@ public class HomePageController implements HomePageApi {
     @Override
     public Mono<ResponseEntity<String>> sendJoinEventRequest(Integer eventId, ServerWebExchange exchange) throws Exception {
         return homePageService.sendJoinEventRequest(eventId)
-                .map(ResponseEntity::ok);
+                .map(response -> ResponseEntity.status(HttpStatus.CREATED).body("\"" + response + "\""));
     }
 
     public Event toEventModel(EventCustom entity) {
