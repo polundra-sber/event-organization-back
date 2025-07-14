@@ -5,30 +5,17 @@ spring:
   application:
     name: event-organization-app
 
-  config:
-    import: vault://
-
-  cloud:
-    vault:
-      uri: http://localhost:8200
-      authentication: token
-      token: root
-      kv:
-        enabled: true
-        backend: secret
-        default-context: event-organization-app
-
   r2dbc:
     url: r2dbc:postgresql://localhost:8083/event_organization
-    username: ${db.username:event_user}
-    password: ${db.password:event_password}
+    username: ${db_username}
+    password: ${db_password}
     pool:
       enabled: true
 
 jwt:
-  secret: ${jwt.secret:my-ultra-secure-secret-key-1234567890}
+  secret: ${jwt_secret:my-ultra-secure-secret-key-1234567890}
   expiration:
-    ms: ${jwt.expiration.ms:86400000}
+    ms: ${jwt_expiration_ms:86400000}
 
 logging:
   level:
