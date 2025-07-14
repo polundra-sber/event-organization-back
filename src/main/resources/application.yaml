@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: event-organization-app
+  config:
+    import: optional:configtree:/run/secrets/
 
   r2dbc:
     url: r2dbc:postgresql://localhost:8083/event_organization
