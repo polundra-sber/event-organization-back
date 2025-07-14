@@ -94,7 +94,7 @@ public class CostListService {
                         up.comment_money_transfer AS commentMoneyTransfer
                     FROM payer
                     JOIN purchase p ON payer.purchase_id = p.purchase_id
-                    JOIN user_profile up ON payer.user_id = up.login
+                    JOIN user_profile up ON p.responsible_user = up.login
                     WHERE payer.user_id = $1 AND p.event_id = $2
                     """;
         return template.getDatabaseClient()

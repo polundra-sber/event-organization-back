@@ -192,7 +192,7 @@ public class CostListController implements CostListApi {
     private Mono<CostAllocationListItem> convertToCostAllocationItem(PurchaseWithUserDto dto, Integer countParticipants) {
         PurchaseEntity purchase = dto.getPurchase();
         UserProfileEntity user = dto.getResponsibleUser();
-
+        System.out.println(dto);
         return costListService.hasReceipt(purchase.getPurchaseId())
                 .map(hasReceipt -> {
                     CostAllocationListItem item = new CostAllocationListItem();
@@ -207,7 +207,7 @@ public class CostListController implements CostListApi {
                     }
 
                     item.setCountParticipants(countParticipants);
-
+                    System.out.println("Выход: " + item);
                     return item;
                 });
     }

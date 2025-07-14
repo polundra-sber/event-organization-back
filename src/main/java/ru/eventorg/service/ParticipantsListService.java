@@ -13,6 +13,7 @@ import ru.eventorg.dto.FullUser;
 import ru.eventorg.entity.EventUserListEntity;
 import ru.eventorg.exception.ErrorState;
 import ru.eventorg.exception.RoleOfCreatorIsUnchangeable;
+import ru.eventorg.exception.UserNotEventParticipantException;
 import ru.eventorg.repository.EventUserListEntityRepository;
 import ru.eventorg.repository.RoleEntityRepository;
 import ru.eventorg.security.SecurityUtils;
@@ -191,11 +192,20 @@ public class ParticipantsListService {
                             // 2. Проверяем что текущий пользователь - организатор или создатель
                             .then(roleService.checkIfOrganizerOrHigher(eventId, currentUserLogin))
 
-                            // 3. Проверяем что удаляемый пользователь - участник мероприятия
-                            .then(roleService.validateIsParticipant(eventId, participantLogin))
+                            // 3. Проверяем что удаляемый пользователь - участник или не допущен
+                            .then(roleService.getUserRoleInEvent(eventId, participantLogin)
+                                    .flatMap(role -> {
+                                        if (UserRole.NOT_ALLOWED.getDisplayName().equals(role) ||
+                                                UserRole.CREATOR.getDisplayName().equals(role) ||
+                                                UserRole.ORGANIZER.getDisplayName().equals(role) ||
+                                                UserRole.PARTICIPANT.getDisplayName().equals(role)) {
+                                            return Mono.empty();
+                                        }
+                                        else return Mono.error(new UserNotEventParticipantException(ErrorState.USER_NOT_EVENT_PARTICIPANT));
+                                    })
 
-                            // 4. Удаляем участника
-                            .then(eventUserListEntityRepository.deleteEventUserListEntityByEventIdAndUserId(eventId, participantLogin))
+                                    // 4. Удаляем участника
+                                    .then(eventUserListEntityRepository.deleteEventUserListEntityByEventIdAndUserId(eventId, participantLogin)))
                             .then();
                 });
     }
