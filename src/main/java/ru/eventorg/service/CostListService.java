@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 public class CostListService {
     private final ReceiptListEntityRepository receiptListEntityRepository;
     private final R2dbcEntityTemplate template;
-    private final ResourceLoader resourceLoader;
 
     public Mono<Boolean> hasReceipt(Integer purchaseId) {
         return receiptListEntityRepository.existsReceiptListEntityByPurchaseId(purchaseId);
@@ -56,27 +55,6 @@ public class CostListService {
                     return user;
                 })
                 .all();
-    }
-
-    public Flux<String> getImagePathsByPurchaseId(Integer purchaseId) {
-        String sqlGetImagePath = """
-                SELECT
-                    r.file_path AS file_path
-                FROM receipt_list rl
-                JOIN receipt r ON r.receipt_id = rl.receipt_id
-                WHERE rl.purchase_id = $1
-                """;
-
-        return template.getDatabaseClient()
-                .sql(sqlGetImagePath)
-                .bind(0, purchaseId)
-                .map((row, meta) -> row.get("file_path", String.class))
-                .all();
-    }
-
-    public Flux<Resource> getReceiptResources(Integer eventId, Integer purchaseId) {
-        return getImagePathsByPurchaseId(purchaseId)
-                .map(path -> resourceLoader.getResource("file:" + path));
     }
 
     public Flux<PurchaseWithUserDto> getPurchasesForUser(Integer eventId, String userLogin) {

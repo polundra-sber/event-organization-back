@@ -173,40 +173,5 @@ public class MyPurchasesListService {
                 eventName
         ));
     }
-
-    public Mono<Void> storeReceipts(Integer purchaseId, Flux<FilePart> fileParts) {
-        return fileParts
-                .flatMap(part -> {
-                    String original = part.filename();
-                    String ext = "";
-                    int dot = original.lastIndexOf('.');
-                    if (dot > 0) {
-                        ext = original.substring(dot);
-                    }
-
-                    String filename = UUID.randomUUID().toString() + ext;
-                    Path targetDir = Paths.get(receiptsDir, String.valueOf(purchaseId));
-                    Path targetFile = targetDir.resolve(filename);
-
-                    // Переносим создание директорий и сохранение файла в boundedElastic
-                    return Mono.fromCallable(() -> {
-                                if (!Files.exists(targetDir)) {
-                                    Files.createDirectories(targetDir); // блокирующий вызов
-                                }
-                                return targetFile;
-                            })
-                            .subscribeOn(Schedulers.boundedElastic()) // выполняем в отдельном потоке
-                            .flatMap(path ->
-                                    part.transferTo(path)
-                                            .then(receiptEntityRepository.save(new ReceiptEntity(null, path.toString())))
-                                            .flatMap(savedReceipt ->
-                                                    receiptListEntityRepository.save(
-                                                            new ReceiptListEntity(null, purchaseId, savedReceipt.getReceiptId())
-                                                    )
-                                            )
-                            );
-                })
-                .then();
-    }
 }
 
