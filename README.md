@@ -3,6 +3,8 @@
 **Многофункциональное веб-приложение для организации частных мероприятий**  
 Бэкенд платформы для совместного планирования событий, управления списками задач/покупок и распределения расходов между участниками.
 
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-stanleystanmarsh%2Fevent--organization--app%3A1.0.2-blue?logo=docker)](https://hub.docker.com/r/stanleystanmarsh/event-organization-app)
+
 ## Описание
 
 Данный проект реализует серверную часть системы для организации и управления частными мероприятиями (дни рождения, корпоративы, встречи и др.). Сервис позволяет создавать события, приглашать участников, вести списки задач и покупок, а также автоматически распределять расходы между всеми участниками.
@@ -70,4 +72,5 @@ java -jar target/event-organization-*.jar
 - Файл спецификации: `src/main/resources/openapi.yaml`
 
 ## Контакты
+- © 2025 [Астафьев Игорь](https://github.com/StanleyStanMarsh), [Богданова Елизавета](https://github.com/lizochka-bogdanovaa), [Ложкина Анастасия](https://github.com/alozhkina), [Луговенко Полина](https://github.com/polyalugovenko), [Якунин Дмитрий](https://github.com/tutibase). Все права защищены.
 - Issues и предложения: через [GitHub Issues](https://github.com/polundra-sber/event-organization-back/issues)
