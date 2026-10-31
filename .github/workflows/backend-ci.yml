@@ -13,10 +13,11 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   build:
-    name: Build Java and Docker
+    name: Build Java, Docker and publish GHCR
     runs-on: ubuntu-24.04
 
     steps:
@@ -30,11 +31,6 @@ jobs:
           java-version: '23'
           cache: maven
 
-      - name: Check Java and Maven versions
-        run: |
-          java -version
-          mvn -version
-
       - name: Build and verify backend
         run: mvn -B -ntp clean verify
 
@@ -42,7 +38,31 @@ jobs:
         run: test -s target/event-organization-1.0.2-SNAPSHOT.jar
 
       - name: Build Docker image
-        run: docker build -t eventorg-back:ci .
+        run: |
+          docker build \
+            --label org.opencontainers.image.source=https://github.com/polundra-sber/event-organization-back \
+            -t eventorg-back:ci .
 
-      - name: Check Java inside Docker image
+      - name: Check Java inside Docker
         run: docker run --rm --entrypoint java eventorg-back:ci -version
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Docker image
+        if: github.event_name == 'push'
+        env:
+          IMAGE: ghcr.io/polundra-sber/event-organization-back
+        run: |
+          SHA_TAG="sha-${GITHUB_SHA:0:12}"
+
+          docker tag eventorg-back:ci "$IMAGE:dev"
+          docker tag eventorg-back:ci "$IMAGE:$SHA_TAG"
+
+          docker push "$IMAGE:dev"
+          docker push "$IMAGE:$SHA_TAG"
