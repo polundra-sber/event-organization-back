@@ -1,0 +1,48 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - feature/devops-coursework
+
+  pull_request:
+    branches:
+      - feature/devops-coursework
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Java and Docker
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 23
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: '23'
+          cache: maven
+
+      - name: Check Java and Maven versions
+        run: |
+          java -version
+          mvn -version
+
+      - name: Build and verify backend
+        run: mvn -B -ntp clean verify
+
+      - name: Check JAR file
+        run: test -s target/event-organization-1.0.2-SNAPSHOT.jar
+
+      - name: Build Docker image
+        run: docker build -t eventorg-back:ci .
+
+      - name: Check Java inside Docker image
+        run: docker run --rm --entrypoint java eventorg-back:ci -version
