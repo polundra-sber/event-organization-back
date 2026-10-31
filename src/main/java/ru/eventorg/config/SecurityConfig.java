@@ -26,6 +26,7 @@ import ru.eventorg.repository.UserSecretsEntityRepository;
 import ru.eventorg.security.JwtTokenUtil;
 
 import java.util.List;
+import java.util.ArrayList;
 
 
 @Configuration
@@ -104,7 +105,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://event-organization.ru", "http://1045269-cs76553.tmweb.ru"));
+        List<String> allowedOrigins = new ArrayList<>(List.of(
+        "http://event-organization.ru",
+        "http://1045269-cs76553.tmweb.ru"));
+
+        String localOrigin = System.getenv("EVENTORG_CORS_LOCAL_ORIGIN");
+
+        if (localOrigin != null && !localOrigin.isBlank()) {
+            allowedOrigins.add(localOrigin);
+        }
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
